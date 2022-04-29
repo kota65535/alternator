@@ -1,0 +1,40 @@
+  CREATE DATABASE `db1`;
+  CREATE TABLE `db1`.`t0`
+  (
+      `int1` int NOT NULL,
+      `int2` int,
+      PRIMARY KEY (`int1`),
+      UNIQUE KEY (`int2`)
+  );
+  CREATE TABLE `db1`.`t1`
+  (
+      `int1` int,
+      `int2` int,
+      `int3` int,
+      `int4` int,
+      `int5` int,
+      `int6` int,
+      FOREIGN KEY (`int1`) REFERENCES `t0` (`int1`),
+-     FOREIGN KEY (`int2`) REFERENCES `t0` (`int1`),
++     FOREIGN KEY (`int2`) REFERENCES `t0` (`int1`) ON UPDATE CASCADE,
+-     FOREIGN KEY `fk1` (`int3`) REFERENCES `t0` (`int1`),
+-     FOREIGN KEY `fk2` (`int4`) REFERENCES `t0` (`int1`),
++     FOREIGN KEY `fk1` (`int5`) REFERENCES `t0` (`int2`),
++     FOREIGN KEY `fk3` (`int6`) REFERENCES `t0` (`int1`)
+  );
+  CREATE TABLE `db1`.`t2`
+  (
+      `int1` int,
+      `int2` int,
+      `int3` int,
+      `int4` int,
+      `int5` int,
+      `int6` int,
+      CONSTRAINT `c1` FOREIGN KEY `c1` (`int1`) REFERENCES `t0` (`int1`),
+-     CONSTRAINT `c2` FOREIGN KEY `c2` (`int2`) REFERENCES `t0` (`int1`),
++     CONSTRAINT `c2` FOREIGN KEY `c2` (`int2`) REFERENCES `t0` (`int2`) ON UPDATE CASCADE,
+-     CONSTRAINT `c3` FOREIGN KEY `c3` (`int3`) REFERENCES `t0` (`int1`),
+-     CONSTRAINT `c4` FOREIGN KEY `c4` (`int4`) REFERENCES `t0` (`int1`),
++     CONSTRAINT `c3` FOREIGN KEY `c3` (`int5`) REFERENCES `t0` (`int2`),
++     CONSTRAINT `c4` FOREIGN KEY `c4` (`int6`) REFERENCES `t0` (`int1`)
+  );

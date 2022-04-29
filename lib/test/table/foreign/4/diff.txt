@@ -1,0 +1,22 @@
+  CREATE DATABASE `db1`;
+  CREATE TABLE `db1`.`t0`
+  (
+~     `t0_int1` int NOT NULL -> `t0_int1` int NOT NULL AUTO_INCREMENT,
+~     `t0_int2` int          -> `t0_int2` int NOT NULL,
+      PRIMARY KEY (`t0_int1`),
+      UNIQUE KEY (`t0_int2`)
+  );
+  CREATE TABLE `db1`.`t1`
+  (
+      `t1_int1` int,
+      `t1_int2` int,
+      `t1_int3` int,
+      `t1_int4` int,
+      `t1_int5` int,
+-     CONSTRAINT `t1_ibfk_1` FOREIGN KEY `t1_ibfk_1` (`t1_int1`) REFERENCES `t0` (`t0_int1`),
++     CONSTRAINT `t1_ibfk_1` FOREIGN KEY `t1_ibfk_1` (`t1_int1`) REFERENCES `t0` (`t0_int1`),
+-     CONSTRAINT `t1_ibfk_2` FOREIGN KEY `t1_ibfk_2` (`t1_int2`) REFERENCES `t0` (`t0_int1`),
++     FOREIGN KEY (`t1_int2`) REFERENCES `t0` (`t0_int2`) ON UPDATE CASCADE,
+-     CONSTRAINT `t1_ibfk_3` FOREIGN KEY `t1_ibfk_3` (`t1_int3`) REFERENCES `t0` (`t0_int1`),
++     FOREIGN KEY `fk2` (`t1_int5`) REFERENCES `t0` (`t0_int2`)
+  );

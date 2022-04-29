@@ -1,0 +1,1 @@
+ALTER TABLE `db1`.`t1` CHANGE COLUMN `int1` `int2` int NOT NULL;

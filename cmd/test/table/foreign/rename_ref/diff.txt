@@ -1,0 +1,20 @@
+  CREATE DATABASE `db1`;
+  CREATE TABLE `db1`.`t0`
+  (
+~     `int1` int NOT NULL -> `int10` int NOT NULL,
+~     `int2` int          -> `int20` int,
+      PRIMARY KEY (`int10`),
+      UNIQUE KEY `int2` (`int20`)
+  );
+  CREATE TABLE `db1`.`t1`
+  (
+      `int1` int,
+      `int2` int,
+      `int3` int,
+      `int4` int,
+      FOREIGN KEY (`int1`) REFERENCES `t0` (`int10`),
+-     CONSTRAINT `t1_ibfk_2` FOREIGN KEY `t1_ibfk_2` (`int2`) REFERENCES `t0` (`int10`),
++     FOREIGN KEY (`int2`) REFERENCES `t0` (`int20`) ON UPDATE CASCADE,
+-     CONSTRAINT `t1_ibfk_3` FOREIGN KEY `t1_ibfk_3` (`int3`) REFERENCES `t0` (`int10`),
++     FOREIGN KEY (`int4`) REFERENCES `t0` (`int20`)
+  );

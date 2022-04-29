@@ -1,0 +1,4 @@
+ALTER TABLE `db1`.`t1` MODIFY COLUMN `varchar1` varchar(20) NOT NULL;
+ALTER TABLE `db1`.`t1` DROP PRIMARY KEY;
+ALTER TABLE `db1`.`t1` MODIFY COLUMN `int1` int;
+ALTER TABLE `db1`.`t1` ADD PRIMARY KEY (`varchar1`);

@@ -1,0 +1,20 @@
+version: '3'
+services:
+  mysql5:
+    image: mysql:5.7
+    command:
+      - --general-log
+    environment:
+      TZ: Asia/Tokyo
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    ports:
+      - 13306:3306
+  mysql8:
+    image: mysql:8.0
+    command:
+      - --general-log
+    environment:
+      TZ: Asia/Tokyo
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    ports:
+      - 13307:3306

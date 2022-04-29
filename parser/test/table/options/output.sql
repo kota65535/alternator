@@ -1,0 +1,32 @@
+CREATE TABLE `t1`
+(
+    `int1` int
+)
+    AUTOEXTENDED_SIZE = 1
+    AUTO_INCREMENT = 1
+    AVG_ROW_LENGTH = 1
+    DEFAULT CHARACTER SET = utf8mb4
+    CHECKSUM = 1
+    DEFAULT COLLATE = utf8mb4_bin
+    COMMENT = 'foo'
+    COMPRESSION = 'ZLIB'
+    CONNECTION = 'connect_string'
+    DATA DIRECTORY = 'path1'
+    INDEX DIRECTORY = 'path2'
+    DELAY_KEY_WRITE = 1
+    ENCRYPTION = 'Y'
+    ENGINE = INNODB
+    ENGINE_ATTRIBUTE = 'attr1'
+    INSERT_METHOD = FIRST
+    KEY_BLOCK_SIZE = 1
+    MAX_ROWS = 1
+    MIN_ROWS = 1
+    PACK_KEYS = 1
+    PASSWORD = 'password'
+    ROW_FORMAT = DYNAMIC
+    SECONDARY_ENGINE_ATTRIBUTE = 'attr2'
+    STATS_AUTO_RECALC = 1
+    STATS_PERSISTENT = 1
+    STATS_SAMPLE_PAGES = 1
+    TABLESPACE = tbl_space STORAGE DISK
+    UNION = (`t2`, `t3`);
