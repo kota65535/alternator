@@ -21,3 +21,10 @@ archives:
         format: zip
 release:
   prerelease: auto
+brews:
+  - tap:
+      owner: kota65535
+      name: homebrew-alternator
+    folder: Formula
+    homepage: https://github.com/kota65535/alternator
+    description: alternator
