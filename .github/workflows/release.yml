@@ -14,10 +14,7 @@ jobs:
         with:
           go-version: 1.18
       - name: Install goyacc
-        run: go get -u github.com/cznic/goyacc
-      - name: add path
-        run: |
-          echo $(go env GOPATH)/bin >> $GITHUB_PATH
+        run: go install github.com/cznic/goyacc
       - name: Run test
         run: |
           echo $PATH
