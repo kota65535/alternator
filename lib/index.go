@@ -6,7 +6,6 @@ import (
 	"github.com/kota65535/alternator/parser"
 	"reflect"
 	"sort"
-	"strings"
 )
 
 type IndexAlterations struct {
@@ -144,7 +143,7 @@ func (r *IndexAlterations) Equivalent() bool {
 // HandleColumnDrop ensures that dropping index is run before dropping column
 func (r *IndexAlterations) HandleColumnDrop(drop Alteration, columnName string) {
 	for _, d := range r.Dropped {
-		if Contains(d.This.KeyPartList, columnName) {
+		if keyPartContains(d.This.KeyPartList, columnName) {
 			drop.AddDependsOn(d)
 		}
 	}
@@ -156,9 +155,9 @@ func (r *IndexAlterations) HandleColumnRename(fromName string, toName string) {
 	// Changing key part is first considered as drop & add a foreign key, so we will find the pair
 	for _, d := range r.Dropped {
 		for _, a := range r.Added {
-			if Contains(d.This.KeyPartList, fromName) && Contains(a.This.KeyPartList, toName) {
+			if keyPartContains(d.This.KeyPartList, fromName) && keyPartContains(a.This.KeyPartList, toName) {
 				// update key parts
-				d.This.KeyPartList = Replace(d.This.KeyPartList, fromName, toName)
+				d.This.KeyPartList = keyPartReplace(d.This.KeyPartList, fromName, toName)
 				if indexDefsEqual(*d.This, *a.This) {
 					r.Retained = append(r.Retained, &RetainedIndex{
 						This:       a.This,
@@ -191,7 +190,7 @@ func (r AddedIndex) Diff() []string {
 }
 
 func (r AddedIndex) Id() string {
-	return strings.Join(r.This.KeyPartList, "\000")
+	return keyPartId(r.This.KeyPartList)
 }
 
 type ModifiedIndex struct {
@@ -216,7 +215,7 @@ func (r ModifiedIndex) Diff() []string {
 }
 
 func (r ModifiedIndex) Id() string {
-	return strings.Join(r.To.KeyPartList, "\000")
+	return keyPartId(r.To.KeyPartList)
 }
 
 type DroppedIndex struct {
@@ -239,7 +238,7 @@ func (r DroppedIndex) Diff() []string {
 }
 
 func (r DroppedIndex) Id() string {
-	return strings.Join(r.This.KeyPartList, "\000")
+	return keyPartId(r.This.KeyPartList)
 }
 
 type RenamedIndex struct {
@@ -259,7 +258,7 @@ func (r RenamedIndex) Diff() []string {
 }
 
 func (r RenamedIndex) Id() string {
-	return strings.Join(r.From.KeyPartList, "\000")
+	return keyPartId(r.From.KeyPartList)
 }
 
 type RetainedIndex struct {
@@ -278,7 +277,7 @@ func (r RetainedIndex) Diff() []string {
 }
 
 func (r RetainedIndex) Id() string {
-	return strings.Join(r.This.KeyPartList, "\000")
+	return keyPartId(r.This.KeyPartList)
 }
 
 func getIndexOrder(from []*parser.IndexDefinition, to []*parser.IndexDefinition, columnOrder map[string]int) map[string]int {
@@ -292,7 +291,7 @@ func getIndexOrder(from []*parser.IndexDefinition, to []*parser.IndexDefinition,
 		length := len(all[i].KeyPartList)
 		for a := 0; a < length; a++ {
 			if all[i].KeyPartList[a] != all[j].KeyPartList[a] {
-				return columnOrder[all[i].KeyPartList[a]] < columnOrder[all[j].KeyPartList[a]]
+				return columnOrder[all[i].KeyPartList[a].ColumnName] < columnOrder[all[j].KeyPartList[a].ColumnName]
 			}
 		}
 		return true
@@ -308,4 +307,25 @@ func indexDefsEqual(c1 parser.IndexDefinition, c2 parser.IndexDefinition) bool {
 	c1.IndexName = ""
 	c2.IndexName = ""
 	return reflect.DeepEqual(c1, c2)
+}
+
+func keyPartContains(keyParts []parser.KeyPart, columnName string) bool {
+	return ContainsIf(keyParts, func(r parser.KeyPart) bool { return r.ColumnName == columnName })
+}
+
+func keyPartId(keyParts []parser.KeyPart) string {
+	return parser.JoinT(keyParts, "\000", "")
+}
+
+func keyPartReplace(keyParts []parser.KeyPart, fromName string, toName string) []parser.KeyPart {
+	ret := []parser.KeyPart{}
+	for _, k := range keyParts {
+		if k.ColumnName == fromName {
+			k.ColumnName = toName
+			ret = append(ret, k)
+		} else {
+			ret = append(ret, k)
+		}
+	}
+	return ret
 }

@@ -10,6 +10,7 @@ import (
 %union{
 statements []Statement
 statement Statement
+keyPartList []KeyPart
 list []interface{}
 item interface{}
 stringList []string
@@ -26,6 +27,10 @@ token *lexer.Token
   	CreateDatabaseStatement
   	UseStatement
   	CreateTableStatement
+
+%type<keyPartList>
+	KeyPartList
+	KeyParts
 
 %type<list>
 	CreateDefinitionList
@@ -74,7 +79,8 @@ token *lexer.Token
    	ForeignKeyDefinition
    	CheckConstraintDefinition
 
-	// ?
+  	KeyPart
+  	// ?
   	PartitionBy
   	OptAlgorithm
 
@@ -98,6 +104,7 @@ token *lexer.Token
 	FloatLiteral
 	StringLiteral
 	Identifier
+	Expression
 
   	// Database
   	DbName
@@ -122,6 +129,7 @@ token *lexer.Token
 
   	// Index
   	OptIndexName
+  	KeyOrder
 	KeyBlockSize
   	IndexType
   	Parser
@@ -356,6 +364,8 @@ token *lexer.Token
 
 	// Index
 	INDEX
+	ASC
+	DESC
 	USING
 	FULLTEXT
 	KEY_BLOCK_SIZE
@@ -1171,7 +1181,7 @@ Collate:
 	}
 
 IndexDefinition:
-	IndexKwd OptIndexName IdentifierList IndexOptions
+	IndexKwd OptIndexName KeyPartList IndexOptions
 	{
 		$$ = &IndexDefinition{
 			IndexName: $2,
@@ -1181,7 +1191,7 @@ IndexDefinition:
 	}
 
 FullTextIndexDefinition:
-	FullTextIndexKwd OptIndexName IdentifierList IndexOptions
+	FullTextIndexKwd OptIndexName KeyPartList IndexOptions
 	{
 		$$ = &FullTextIndexDefinition{
 			IndexName: $2,
@@ -1191,7 +1201,7 @@ FullTextIndexDefinition:
 	}
 
 PrimaryKeyDefinition:
-	OptConstraint PrimaryKeyKwd IdentifierList IndexOptions
+	OptConstraint PrimaryKeyKwd KeyPartList IndexOptions
 	{
 		$$ = &PrimaryKeyDefinition{
 			ConstraintName: $1,
@@ -1201,7 +1211,7 @@ PrimaryKeyDefinition:
 	}
 
 UniqueKeyDefinition:
-	OptConstraint UniqueKeyKwd OptIndexName IdentifierList IndexOptions
+	OptConstraint UniqueKeyKwd OptIndexName KeyPartList IndexOptions
 	{
 		$$ = &UniqueKeyDefinition{
 			ConstraintName: $1,
@@ -1212,7 +1222,7 @@ UniqueKeyDefinition:
 	}
 
 ForeignKeyDefinition:
-	OptConstraint ForeignKeyKwd OptIndexName IdentifierList ReferenceDefinition
+	OptConstraint ForeignKeyKwd OptIndexName KeyPartList ReferenceDefinition
 	{
 		$$ = &ForeignKeyDefinition{
 			ConstraintName: $1,
@@ -1229,6 +1239,45 @@ OptIndexName:
 |	Identifier
 	{
 		$$ = $1
+	}
+
+KeyPartList:
+	LP KeyParts RP
+	{
+		$$ = $2
+	}
+
+KeyParts:
+	KeyPart
+	{
+		$$ = []KeyPart{$1.(KeyPart)}
+	}
+|	KeyParts COMMA KeyPart
+	{
+		$$ = append($1, $3.(KeyPart))
+	}
+
+KeyOrder:
+	{
+		$$ = ""
+	}
+|	ASC
+	{
+		$$ = "ASC"
+	}
+|	DESC
+	{
+		$$ = "DESC"
+	}
+
+KeyPart:
+	Identifier OptFieldLen KeyOrder
+	{
+		$$ = KeyPart{
+			ColumnName: $1,
+			Length: $2,
+			Order: $3,
+		}
 	}
 
 IndexOptions:
@@ -1313,7 +1362,7 @@ OptReferenceDefinition:
 	}
 
 ReferenceDefinition:
-	REFERENCES TableName IdentifierList ReferenceOptions
+	REFERENCES TableName KeyPartList ReferenceOptions
 	{
 		$$ = ReferenceDefinition{
 			TableName: $2[1],
@@ -2075,6 +2124,12 @@ IdentifierList:
 	LP Identifiers RP
 	{
 		$$ = $2
+	}
+
+Expression:
+	EXPRESSION
+	{
+		$$ = $1.Literal
 	}
 
 CreateKwd:

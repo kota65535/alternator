@@ -1,9 +1,9 @@
-ALTER TABLE `db1`.`t1` DROP FOREIGN KEY `<unknown constraint name of 'FOREIGN KEY (int2)'>`;
-ALTER TABLE `db1`.`t1` DROP INDEX `<unknown index name of 'FOREIGN KEY (int2)'>`;
+ALTER TABLE `db1`.`t1` DROP FOREIGN KEY `<unknown constraint name of 'FOREIGN KEY (`int2`)'>`;
+ALTER TABLE `db1`.`t1` DROP INDEX `<unknown index name of 'FOREIGN KEY (`int2`)'>`;
 ALTER TABLE `db1`.`t1` ADD FOREIGN KEY (`int2`) REFERENCES `t0` (`int1`) ON UPDATE CASCADE;
-ALTER TABLE `db1`.`t1` DROP FOREIGN KEY `<unknown constraint name of 'FOREIGN KEY (int3)'>`;
+ALTER TABLE `db1`.`t1` DROP FOREIGN KEY `<unknown constraint name of 'FOREIGN KEY (`int3`)'>`;
 ALTER TABLE `db1`.`t1` DROP INDEX `fk1`;
-ALTER TABLE `db1`.`t1` DROP FOREIGN KEY `<unknown constraint name of 'FOREIGN KEY (int4)'>`;
+ALTER TABLE `db1`.`t1` DROP FOREIGN KEY `<unknown constraint name of 'FOREIGN KEY (`int4`)'>`;
 ALTER TABLE `db1`.`t1` DROP INDEX `fk2`;
 ALTER TABLE `db1`.`t1` ADD FOREIGN KEY `fk1` (`int5`) REFERENCES `t0` (`int2`);
 ALTER TABLE `db1`.`t1` ADD FOREIGN KEY `fk3` (`int6`) REFERENCES `t0` (`int1`);

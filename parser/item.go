@@ -216,7 +216,7 @@ type StringListType struct {
 func (t StringListType) String() string {
 	values := ""
 	if len(t.Values) > 0 {
-		values = fmt.Sprintf("(%s)", join(t.Values, ", ", "'"))
+		values = fmt.Sprintf("(%s)", joinS(t.Values, ", ", "'"))
 	}
 	return fmt.Sprintf("%s%s%s%s",
 		t.Name,
@@ -227,14 +227,14 @@ func (t StringListType) String() string {
 
 type ReferenceDefinition struct {
 	TableName        string
-	KeyPartList      []string
+	KeyPartList      []KeyPart
 	ReferenceOptions ReferenceOptions
 }
 
 func (r ReferenceDefinition) String() string {
 	return fmt.Sprintf("REFERENCES `%s` (%s)%s",
 		r.TableName,
-		join(r.KeyPartList, ", ", "`"),
+		JoinT(r.KeyPartList, ", ", ""),
 		optS(r.ReferenceOptions.String(), " %s"))
 }
 
@@ -295,61 +295,74 @@ func (r CheckConstraintOptions) Diff(o CheckConstraintOptions) CheckConstraintOp
 	return structDifference(r, o)
 }
 
+type KeyPart struct {
+	ColumnName string
+	Length     string
+	Order      string
+}
+
+func (r KeyPart) String() string {
+	return fmt.Sprintf("`%s`%s%s",
+		r.ColumnName,
+		optS(r.Length, "(%s)"),
+		optS(r.Order, " %s"))
+}
+
 type IndexDefinition struct {
 	IndexName    string
-	KeyPartList  []string
+	KeyPartList  []KeyPart
 	IndexOptions IndexOptions
 }
 
 func (r IndexDefinition) String() string {
 	return fmt.Sprintf("INDEX%s (%s)%s",
 		optS(r.IndexName, " `%s`"),
-		join(r.KeyPartList, ", ", "`"),
+		JoinT(r.KeyPartList, ", ", ""),
 		optS(r.IndexOptions.String(), " %s"))
 }
 
 func (r IndexDefinition) StringKeyPartList() string {
-	return fmt.Sprintf("INDEX (%s)", strings.Join(r.KeyPartList, ", "))
+	return fmt.Sprintf("INDEX (%s)", JoinT(r.KeyPartList, ", ", ""))
 }
 
 type FullTextIndexDefinition struct {
 	IndexName    string
-	KeyPartList  []string
+	KeyPartList  []KeyPart
 	IndexOptions IndexOptions
 }
 
 func (r FullTextIndexDefinition) String() string {
 	return fmt.Sprintf("FULLTEXT INDEX%s (%s)%s",
 		optS(r.IndexName, " `%s`"),
-		join(r.KeyPartList, ", ", "`"),
+		JoinT(r.KeyPartList, ", ", ""),
 		optS(r.IndexOptions.String(), " %s"))
 }
 
 func (r FullTextIndexDefinition) StringKeyPartList() string {
-	return fmt.Sprintf("FULLTEXT INDEX (%s)", strings.Join(r.KeyPartList, ", "))
+	return fmt.Sprintf("FULLTEXT INDEX (%s)", JoinT(r.KeyPartList, ", ", ""))
 }
 
 type PrimaryKeyDefinition struct {
 	ConstraintName string
-	KeyPartList    []string
+	KeyPartList    []KeyPart
 	IndexOptions   IndexOptions
 }
 
 func (r PrimaryKeyDefinition) String() string {
 	return fmt.Sprintf("%sPRIMARY KEY (%s)%s",
 		optS(r.ConstraintName, "CONSTRAINT `%s` "),
-		join(r.KeyPartList, ", ", "`"),
+		JoinT(r.KeyPartList, ", ", ""),
 		optS(r.IndexOptions.String(), " %s"))
 }
 
 func (r PrimaryKeyDefinition) StringKeyPartList() string {
-	return fmt.Sprintf("PRIMARY KEY (%s)", strings.Join(r.KeyPartList, ", "))
+	return fmt.Sprintf("PRIMARY KEY (%s)", JoinT(r.KeyPartList, ", ", ""))
 }
 
 type UniqueKeyDefinition struct {
 	ConstraintName string
 	IndexName      string
-	KeyPartList    []string
+	KeyPartList    []KeyPart
 	IndexOptions   IndexOptions
 }
 
@@ -357,12 +370,12 @@ func (r UniqueKeyDefinition) String() string {
 	return fmt.Sprintf("%sUNIQUE KEY%s (%s)%s",
 		optS(r.ConstraintName, "CONSTRAINT `%s` "),
 		optS(r.IndexName, " `%s`"),
-		join(r.KeyPartList, ", ", "`"),
+		JoinT(r.KeyPartList, ", ", ""),
 		optS(r.IndexOptions.String(), " %s"))
 }
 
 func (r UniqueKeyDefinition) StringKeyPartList() string {
-	return fmt.Sprintf("UNIQUE KEY (%s)", strings.Join(r.KeyPartList, ", "))
+	return fmt.Sprintf("UNIQUE KEY (%s)", JoinT(r.KeyPartList, ", ", ""))
 }
 
 type IndexOptions struct {
@@ -405,7 +418,7 @@ func (r IndexOptions) Diff(o IndexOptions) IndexOptions {
 type ForeignKeyDefinition struct {
 	ConstraintName      string
 	IndexName           string
-	KeyPartList         []string
+	KeyPartList         []KeyPart
 	ReferenceDefinition ReferenceDefinition
 }
 
@@ -413,12 +426,12 @@ func (r ForeignKeyDefinition) String() string {
 	return fmt.Sprintf("%sFOREIGN KEY%s (%s)%s",
 		optS(r.ConstraintName, "CONSTRAINT `%s` "),
 		optS(r.IndexName, " `%s`"),
-		join(r.KeyPartList, ", ", "`"),
+		JoinT(r.KeyPartList, ", ", ""),
 		optS(r.ReferenceDefinition.String(), " %s"))
 }
 
 func (r ForeignKeyDefinition) StringKeyPartList() string {
-	return fmt.Sprintf("FOREIGN KEY (%s)", join(r.KeyPartList, ", ", ""))
+	return fmt.Sprintf("FOREIGN KEY (%s)", JoinT(r.KeyPartList, ", ", ""))
 }
 
 type TableOptions struct {
@@ -537,7 +550,7 @@ func (r TableOptions) Map() *linkedhashmap.Map {
 		ret.Put("TABLESPACE", fmt.Sprintf("%s %s", r.TableSpace, optS(r.TableSpaceStorage, "STORAGE %s")))
 	}
 	if len(r.Union) != 0 {
-		ret.Put("UNION", fmt.Sprintf("(%s)", join(r.Union, ", ", "`")))
+		ret.Put("UNION", fmt.Sprintf("(%s)", joinS(r.Union, ", ", "`")))
 	}
 	return ret
 }

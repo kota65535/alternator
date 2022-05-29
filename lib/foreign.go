@@ -6,7 +6,6 @@ import (
 	"github.com/kota65535/alternator/parser"
 	"reflect"
 	"sort"
-	"strings"
 )
 
 type ForeignKeyAlterations struct {
@@ -175,13 +174,13 @@ func (r *ForeignKeyAlterations) HandleTableRename(alt Alteration, fromName strin
 // HandleColumnModify ensures the foreign keys are recreated when their key columns are modified.
 func (r *ForeignKeyAlterations) HandleColumnModify(modify Alteration, columnName string) {
 	for _, d := range r.Dropped {
-		if Contains(d.This.KeyPartList, columnName) {
+		if keyPartContains(d.This.KeyPartList, columnName) {
 			modify.AddDependsOn(d)
 		}
 	}
 
 	for _, a := range r.Added {
-		if Contains(a.This.KeyPartList, columnName) {
+		if keyPartContains(a.This.KeyPartList, columnName) {
 			a.AddDependsOn(modify)
 		}
 	}
@@ -190,7 +189,7 @@ func (r *ForeignKeyAlterations) HandleColumnModify(modify Alteration, columnName
 // HandleColumnDrop ensures that foreign key deletion is run before column deletion
 func (r *ForeignKeyAlterations) HandleColumnDrop(drop Alteration, columnName string) {
 	for _, f := range r.Dropped {
-		if Contains(f.This.KeyPartList, columnName) {
+		if keyPartContains(f.This.KeyPartList, columnName) {
 			drop.AddDependsOn(f)
 		}
 	}
@@ -198,7 +197,7 @@ func (r *ForeignKeyAlterations) HandleColumnDrop(drop Alteration, columnName str
 
 func (r *ForeignKeyAlterations) HandleRefColumnDrop(drop Alteration, tableName string, columnName string) {
 	for _, f := range r.Dropped {
-		if f.This.ReferenceDefinition.TableName == tableName && Contains(f.This.ReferenceDefinition.KeyPartList, columnName) {
+		if f.This.ReferenceDefinition.TableName == tableName && keyPartContains(f.This.ReferenceDefinition.KeyPartList, columnName) {
 			drop.AddDependsOn(f)
 		}
 	}
@@ -211,10 +210,10 @@ func (r *ForeignKeyAlterations) HandleRefColumnRename(tableName string, fromName
 	for _, d := range r.Dropped {
 		for _, a := range r.Added {
 			if d.This.ReferenceDefinition.TableName == tableName &&
-				Contains(d.This.ReferenceDefinition.KeyPartList, fromName) &&
-				Contains(a.This.ReferenceDefinition.KeyPartList, toName) {
+				keyPartContains(d.This.ReferenceDefinition.KeyPartList, fromName) &&
+				keyPartContains(a.This.ReferenceDefinition.KeyPartList, toName) {
 				// update key parts
-				d.This.ReferenceDefinition.KeyPartList = Replace(d.This.ReferenceDefinition.KeyPartList, fromName, toName)
+				d.This.ReferenceDefinition.KeyPartList = keyPartReplace(d.This.ReferenceDefinition.KeyPartList, fromName, toName)
 				if foreignKeyDefsEqual(*d.This, *a.This) {
 					r.Retained = append(r.Retained, &RetainedForeignKey{
 						This:       a.This,
@@ -236,7 +235,7 @@ func (r *ForeignKeyAlterations) HandleRefColumnModify(modify Alteration, tableNa
 	removed := map[Alteration]bool{}
 	// Retained foreign keys must be dropped before the column modification and added again after that
 	for _, f := range r.Retained {
-		if f.This.ReferenceDefinition.TableName == tableName && Contains(f.This.ReferenceDefinition.KeyPartList, columnName) {
+		if f.This.ReferenceDefinition.TableName == tableName && keyPartContains(f.This.ReferenceDefinition.KeyPartList, columnName) {
 			// Drop the FK before column modification
 			droppedFK := &DroppedForeignKey{
 				This:       f.This,
@@ -262,7 +261,7 @@ func (r *ForeignKeyAlterations) HandleRefColumnModify(modify Alteration, tableNa
 
 	// Dropped foreign key must be dropped before the column modification
 	for _, f := range r.Dropped {
-		if f.This.ReferenceDefinition.TableName == tableName && Contains(f.This.ReferenceDefinition.KeyPartList, columnName) {
+		if f.This.ReferenceDefinition.TableName == tableName && keyPartContains(f.This.ReferenceDefinition.KeyPartList, columnName) {
 			modify.AddDependsOn(f)
 		}
 	}
@@ -285,7 +284,7 @@ func (r AddedForeignKey) Diff() []string {
 }
 
 func (r AddedForeignKey) Id() string {
-	return strings.Join(r.This.KeyPartList, "\000")
+	return keyPartId(r.This.KeyPartList)
 }
 
 type DroppedForeignKey struct {
@@ -315,7 +314,7 @@ func (r DroppedForeignKey) Diff() []string {
 }
 
 func (r DroppedForeignKey) Id() string {
-	return strings.Join(r.This.KeyPartList, "\000")
+	return keyPartId(r.This.KeyPartList)
 }
 
 type RetainedForeignKey struct {
@@ -334,7 +333,7 @@ func (r RetainedForeignKey) Diff() []string {
 }
 
 func (r RetainedForeignKey) Id() string {
-	return strings.Join(r.This.KeyPartList, "\000")
+	return keyPartId(r.This.KeyPartList)
 }
 
 func getForeignKeyOrder(from []*parser.ForeignKeyDefinition, to []*parser.ForeignKeyDefinition, columnOrder map[string]int) map[string]int {
@@ -348,7 +347,7 @@ func getForeignKeyOrder(from []*parser.ForeignKeyDefinition, to []*parser.Foreig
 		length := len(all[i].KeyPartList)
 		for a := 0; a < length; a++ {
 			if all[i].KeyPartList[a] != all[j].KeyPartList[a] {
-				return columnOrder[all[i].KeyPartList[a]] < columnOrder[all[j].KeyPartList[a]]
+				return columnOrder[all[i].KeyPartList[a].ColumnName] < columnOrder[all[j].KeyPartList[a].ColumnName]
 			}
 		}
 		return true

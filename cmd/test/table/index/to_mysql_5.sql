@@ -9,7 +9,7 @@ CREATE TABLE `t1`
     `int3` int,
     `int4` int,
     `int5` int,
-    `int6` int,
+    `var6` varchar(10),
     # modified
     INDEX (`int2`, `int3`),
     # remained
@@ -17,5 +17,5 @@ CREATE TABLE `t1`
     # added
     INDEX idx1 (`int5`),
     # renamed
-    INDEX idx3 (`int6`)
+    INDEX idx3 (`var6`(5) ASC)
 );

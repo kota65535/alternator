@@ -6,7 +6,6 @@ import (
 	"github.com/kota65535/alternator/parser"
 	"reflect"
 	"sort"
-	"strings"
 )
 
 type FullTextIndexAlterations struct {
@@ -144,7 +143,7 @@ func (r *FullTextIndexAlterations) Equivalent() bool {
 // HandleColumnDrop ensures that dropping index is run before dropping column
 func (r *FullTextIndexAlterations) HandleColumnDrop(drop Alteration, columnName string) {
 	for _, d := range r.Dropped {
-		if Contains(d.This.KeyPartList, columnName) {
+		if keyPartContains(d.This.KeyPartList, columnName) {
 			drop.AddDependsOn(d)
 		}
 	}
@@ -156,9 +155,9 @@ func (r *FullTextIndexAlterations) HandleColumnRename(fromName string, toName st
 	// Changing key part is first considered as drop & add a foreign key, so we will find the pair
 	for _, d := range r.Dropped {
 		for _, a := range r.Added {
-			if Contains(d.This.KeyPartList, fromName) && Contains(a.This.KeyPartList, toName) {
+			if keyPartContains(d.This.KeyPartList, fromName) && keyPartContains(a.This.KeyPartList, toName) {
 				// update key parts
-				d.This.KeyPartList = Replace(d.This.KeyPartList, fromName, toName)
+				d.This.KeyPartList = keyPartReplace(d.This.KeyPartList, fromName, toName)
 				if fullTextIndexDefsEqual(*d.This, *a.This) {
 					r.Retained = append(r.Retained, &RetainedFullTextIndex{
 						This:       a.This,
@@ -191,7 +190,7 @@ func (r AddedFullTextIndex) Diff() []string {
 }
 
 func (r AddedFullTextIndex) Id() string {
-	return strings.Join(r.This.KeyPartList, "\000")
+	return keyPartId(r.This.KeyPartList)
 }
 
 type ModifiedFullTextIndex struct {
@@ -216,7 +215,7 @@ func (r ModifiedFullTextIndex) Diff() []string {
 }
 
 func (r ModifiedFullTextIndex) Id() string {
-	return strings.Join(r.From.KeyPartList, "\000")
+	return keyPartId(r.From.KeyPartList)
 }
 
 type DroppedFullTextIndex struct {
@@ -239,7 +238,7 @@ func (r DroppedFullTextIndex) Diff() []string {
 }
 
 func (r DroppedFullTextIndex) Id() string {
-	return strings.Join(r.This.KeyPartList, "\000")
+	return keyPartId(r.This.KeyPartList)
 }
 
 type RenamedFullTextIndex struct {
@@ -259,7 +258,7 @@ func (r RenamedFullTextIndex) Diff() []string {
 }
 
 func (r RenamedFullTextIndex) Id() string {
-	return strings.Join(r.From.KeyPartList, "\000")
+	return keyPartId(r.From.KeyPartList)
 }
 
 type RetainedFullTextIndex struct {
@@ -278,7 +277,7 @@ func (r RetainedFullTextIndex) Diff() []string {
 }
 
 func (r RetainedFullTextIndex) Id() string {
-	return strings.Join(r.This.KeyPartList, "\000")
+	return keyPartId(r.This.KeyPartList)
 }
 
 func getFullTextIndexOrder(from []*parser.FullTextIndexDefinition, to []*parser.FullTextIndexDefinition, columnOrder map[string]int) map[string]int {
@@ -292,7 +291,7 @@ func getFullTextIndexOrder(from []*parser.FullTextIndexDefinition, to []*parser.
 		length := len(all[i].KeyPartList)
 		for a := 0; a < length; a++ {
 			if all[i].KeyPartList[a] != all[j].KeyPartList[a] {
-				return columnOrder[all[i].KeyPartList[a]] < columnOrder[all[j].KeyPartList[a]]
+				return columnOrder[all[i].KeyPartList[a].ColumnName] < columnOrder[all[j].KeyPartList[a].ColumnName]
 			}
 		}
 		return true

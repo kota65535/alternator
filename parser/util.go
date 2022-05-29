@@ -31,10 +31,18 @@ func optS(s1 string, s2 string) string {
 	return fmt.Sprintf(s2, s1)
 }
 
-func join(elems []string, sep string, enclose string) string {
+func joinS(elems []string, sep string, enclose string) string {
 	var enclosed []string
 	for _, e := range elems {
 		enclosed = append(enclosed, enclose+e+enclose)
+	}
+	return strings.Join(enclosed, sep)
+}
+
+func JoinT[T fmt.Stringer](elems []T, sep string, enclose string) string {
+	var enclosed []string
+	for _, e := range elems {
+		enclosed = append(enclosed, enclose+e.String()+enclose)
 	}
 	return strings.Join(enclosed, sep)
 }

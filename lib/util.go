@@ -28,7 +28,7 @@ func optS(s1 string, s2 string) string {
 	return fmt.Sprintf(s2, s1)
 }
 
-func find[E any](arr []E, f func(E) bool) int {
+func Find[E any](arr []E, f func(E) bool) int {
 	for i, a := range arr {
 		if f(a) {
 			return i
@@ -47,18 +47,30 @@ func RemoveIf[E any](arr []E, f func(E) bool) []E {
 	return ret
 }
 
-func index[E comparable](arr []E, v E) int {
+func Index[E comparable](arr []E, v E) int {
 	for i, a := range arr {
 		if a == v {
 			return i
 		}
 	}
 	return -1
+}
 
+func IndexIf[E comparable](arr []E, f func(E) bool) int {
+	for i, a := range arr {
+		if f(a) {
+			return i
+		}
+	}
+	return -1
 }
 
 func Contains[E comparable](arr []E, v E) bool {
-	return index(arr, v) >= 0
+	return Index(arr, v) >= 0
+}
+
+func ContainsIf[E comparable](arr []E, f func(E) bool) bool {
+	return IndexIf(arr, f) >= 0
 }
 
 func Replace[E comparable](arr []E, from E, to E) []E {

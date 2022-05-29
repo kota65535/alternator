@@ -773,15 +773,22 @@ func TestCreateTableWithindexes(t *testing.T) {
 					},
 				},
 				&IndexDefinition{
-					KeyPartList: []string{"int1"},
+					KeyPartList: []KeyPart{
+						{ColumnName: "int1"},
+					},
 				},
 				&IndexDefinition{
-					IndexName:   "idx1",
-					KeyPartList: []string{"int2", "int3"},
+					IndexName: "idx1",
+					KeyPartList: []KeyPart{
+						{ColumnName: "int2", Order: "ASC"},
+						{ColumnName: "int3", Order: "DESC"},
+					},
 				},
 				&IndexDefinition{
-					IndexName:   "idx2",
-					KeyPartList: []string{"varchar1"},
+					IndexName: "idx2",
+					KeyPartList: []KeyPart{
+						{ColumnName: "varchar1", Length: "5"},
+					},
 					IndexOptions: IndexOptions{
 						IndexType:    "BTREE",
 						KeyBlockSize: "1",
@@ -790,12 +797,16 @@ func TestCreateTableWithindexes(t *testing.T) {
 					},
 				},
 				&FullTextIndexDefinition{
-					KeyPartList:  []string{"varchar2"},
+					KeyPartList: []KeyPart{
+						{ColumnName: "varchar2"},
+					},
 					IndexOptions: IndexOptions{},
 				},
 				&FullTextIndexDefinition{
-					IndexName:   "idx3",
-					KeyPartList: []string{"varchar3"},
+					IndexName: "idx3",
+					KeyPartList: []KeyPart{
+						{ColumnName: "varchar3"},
+					},
 					IndexOptions: IndexOptions{
 						KeyBlockSize: "1",
 						Parser:       "ngram",
@@ -837,16 +848,24 @@ func TestCreateTableWithConstraints(t *testing.T) {
 					},
 				},
 				&PrimaryKeyDefinition{
-					KeyPartList: []string{"int1"},
+					KeyPartList: []KeyPart{
+						{ColumnName: "int1", Order: "DESC"},
+					},
 				},
 				&UniqueKeyDefinition{
-					KeyPartList: []string{"int2"},
+					KeyPartList: []KeyPart{
+						{ColumnName: "int2", Order: "DESC"},
+					},
 				},
 				&ForeignKeyDefinition{
-					KeyPartList: []string{"int1"},
+					KeyPartList: []KeyPart{
+						{ColumnName: "int1"},
+					},
 					ReferenceDefinition: ReferenceDefinition{
-						TableName:   "t1",
-						KeyPartList: []string{"int2"},
+						TableName: "t1",
+						KeyPartList: []KeyPart{
+							{ColumnName: "int2"},
+						},
 					},
 				},
 			},
@@ -871,7 +890,10 @@ func TestCreateTableWithConstraints(t *testing.T) {
 				},
 				&PrimaryKeyDefinition{
 					ConstraintName: "u1",
-					KeyPartList:    []string{"int1", "int2"},
+					KeyPartList: []KeyPart{
+						{ColumnName: "int1"},
+						{ColumnName: "int2"},
+					},
 					IndexOptions: IndexOptions{
 						IndexType:    "BTREE",
 						KeyBlockSize: "1",
@@ -881,7 +903,10 @@ func TestCreateTableWithConstraints(t *testing.T) {
 				},
 				&UniqueKeyDefinition{
 					ConstraintName: "u2",
-					KeyPartList:    []string{"int1", "int2"},
+					KeyPartList: []KeyPart{
+						{ColumnName: "int1", Order: "ASC"},
+						{ColumnName: "int2"},
+					},
 					IndexOptions: IndexOptions{
 						IndexType:    "BTREE",
 						KeyBlockSize: "1",
@@ -892,10 +917,16 @@ func TestCreateTableWithConstraints(t *testing.T) {
 				&ForeignKeyDefinition{
 					ConstraintName: "u3",
 					IndexName:      "i3",
-					KeyPartList:    []string{"int1", "int2"},
+					KeyPartList: []KeyPart{
+						{ColumnName: "int1", Order: "ASC"},
+						{ColumnName: "int2"},
+					},
 					ReferenceDefinition: ReferenceDefinition{
-						TableName:   "t1",
-						KeyPartList: []string{"int1", "int2"},
+						TableName: "t1",
+						KeyPartList: []KeyPart{
+							{ColumnName: "int1"},
+							{ColumnName: "int2"},
+						},
 						ReferenceOptions: ReferenceOptions{
 							Match:    "FULL",
 							OnUpdate: "CASCADE",

@@ -8,8 +8,8 @@ create table t1
     varchar3 VARCHAR(10),
 
     INDEX (`int1`),
-    INDEX idx1 (`int2`, `int3`),
-    INDEX idx2 (varchar1)
+    INDEX idx1 (`int2` ASC, `int3` DESC),
+    INDEX idx2 (varchar1(5))
         USING BTREE
         KEY_BLOCK_SIZE = 1
         VISIBLE

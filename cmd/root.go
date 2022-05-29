@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	_ "embed"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
@@ -9,10 +10,13 @@ import (
 	"syscall"
 )
 
+//go:embed root.tmpl
+var rootUsage string
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "alternator <command> [options]",
-	Short: "SQL schema management tool",
+	Use:  "alternator <command> [options]",
+	Long: "SQL database schema management tool.",
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -32,13 +36,15 @@ var (
 const MinTermWidth = 80
 
 func init() {
+	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "debug flag")
+	rootCmd.SetUsageTemplate(rootUsage)
+
 	w, _, _ := term.GetSize(syscall.Stdin)
 	if w < MinTermWidth {
 		w = MinTermWidth
 	}
 	width = w
-	logrus.SetLevel(logrus.DebugLevel)
 	if debug || os.Getenv("ALTERNATOR_DEBUG") == "true" {
 		logrus.SetLevel(logrus.DebugLevel)
 	}

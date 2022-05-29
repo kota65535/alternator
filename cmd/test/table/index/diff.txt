@@ -6,10 +6,10 @@
       `int3` int,
       `int4` int,
       `int5` int,
-      `int6` int,
+      `var6` varchar(10),
       INDEX (`int1`),
 -     INDEX `idx1` (`int4`),
-+     INDEX `idx1` (`int5`),
-~     INDEX `idx2` (`int6`)         -> INDEX `idx3` (`int6`),
++     INDEX `idx1` (`int5` DESC),
+~     INDEX `idx2` (`var6`(5))      -> INDEX `idx3` (`var6`(5)),
 ~     INDEX `int2` (`int2`, `int3`) -> INDEX (`int2`, `int3`) INVISIBLE
   );

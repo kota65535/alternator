@@ -3,6 +3,7 @@ package cmd
 import (
 	"bufio"
 	"database/sql"
+	_ "embed"
 	"fmt"
 	"github.com/kota65535/alternator/lib"
 	"github.com/spf13/cobra"
@@ -10,6 +11,9 @@ import (
 	"os"
 	"strings"
 )
+
+//go:embed apply.tmpl
+var applyUsage string
 
 type ApplyParams struct {
 	AutoApprove bool
@@ -20,14 +24,15 @@ func init() {
 
 	c := &cobra.Command{
 		Use:   "apply <schema-file> <database-url>",
-		Short: "Reflect schema change to database",
-		Args:  cobra.RangeArgs(2, 2),
+		Short: "Update the database schema according to the schema file",
+		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			applyCmd(args[0], args[1], params)
 		},
 	}
 	c.Flags().BoolVar(&params.AutoApprove, "auto-approve", false, "Approve automatically")
 	rootCmd.AddCommand(c)
+	c.SetUsageTemplate(applyUsage)
 }
 
 func applyCmd(local string, remote string, params ApplyParams) *lib.DatabaseAlterations {
@@ -36,7 +41,7 @@ func applyCmd(local string, remote string, params ApplyParams) *lib.DatabaseAlte
 	ePrintln(strings.Repeat("―", width))
 	statements := alt.Statements()
 	if len(statements) == 0 {
-		bPrintln("No changes. Database schemas match your configuration.")
+		bPrintln("Your database schema is up-to-date! No change required.")
 		return nil
 	}
 	bPrintln("Statements to execute:")

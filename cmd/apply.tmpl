@@ -1,0 +1,17 @@
+Usage:
+  alternator apply <schema-file> <database-url> [flags]
+
+Arguments:
+  schema-file    Path of a schema file
+  database-url   URL for connecting to a database. The URL format is like following:
+
+                 (dialect)://(username)[:(password)]@(hostname)[:(port)][/(database)]
+
+                 Examples:
+                   mysql://root@localhost
+                   mysql://root@localhost:13306/db1
+                   mysql://root:mystrongpassword@mydb.dev.example.com/db1
+
+Flags:
+      --auto-approve  Automatically apply changes
+  -h, --help          Show this messages

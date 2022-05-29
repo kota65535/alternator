@@ -6,7 +6,6 @@ import (
 	"github.com/kota65535/alternator/parser"
 	"reflect"
 	"sort"
-	"strings"
 )
 
 type UniqueKeyAlterations struct {
@@ -161,7 +160,7 @@ func (r *UniqueKeyAlterations) Equivalent() bool {
 // HandleColumnDrop ensures that dropping a unique key is run before dropping a column
 func (r *UniqueKeyAlterations) HandleColumnDrop(drop Alteration, columnName string) {
 	for _, d := range r.Dropped {
-		if Contains(d.This.KeyPartList, columnName) {
+		if keyPartContains(d.This.KeyPartList, columnName) {
 			drop.AddDependsOn(d)
 		}
 	}
@@ -173,9 +172,9 @@ func (r *UniqueKeyAlterations) HandleColumnRename(fromName string, toName string
 	// Changing key part is first considered as drop & add a foreign key, so we will find the pair
 	for _, d := range r.Dropped {
 		for _, a := range r.Added {
-			if Contains(d.This.KeyPartList, fromName) && Contains(a.This.KeyPartList, toName) {
+			if keyPartContains(d.This.KeyPartList, fromName) && keyPartContains(a.This.KeyPartList, toName) {
 				// update key parts
-				d.This.KeyPartList = Replace(d.This.KeyPartList, fromName, toName)
+				d.This.KeyPartList = keyPartReplace(d.This.KeyPartList, fromName, toName)
 				if uniqueDefsEqual(*d.This, *a.This) {
 					r.Retained = append(r.Retained, &RetainedUniqueKey{
 						This:       a.This,
@@ -208,7 +207,7 @@ func (r AddedUniqueKey) Diff() []string {
 }
 
 func (r AddedUniqueKey) Id() string {
-	return strings.Join(r.This.KeyPartList, "\000")
+	return keyPartId(r.This.KeyPartList)
 }
 
 type ModifiedUniqueKey struct {
@@ -233,7 +232,7 @@ func (r ModifiedUniqueKey) Diff() []string {
 }
 
 func (r ModifiedUniqueKey) Id() string {
-	return strings.Join(r.To.KeyPartList, "\000")
+	return keyPartId(r.To.KeyPartList)
 }
 
 type DroppedUniqueKey struct {
@@ -256,7 +255,7 @@ func (r DroppedUniqueKey) Diff() []string {
 }
 
 func (r DroppedUniqueKey) Id() string {
-	return strings.Join(r.This.KeyPartList, "\000")
+	return keyPartId(r.This.KeyPartList)
 }
 
 type RenamedUniqueKey struct {
@@ -276,7 +275,7 @@ func (r RenamedUniqueKey) Diff() []string {
 }
 
 func (r RenamedUniqueKey) Id() string {
-	return strings.Join(r.From.KeyPartList, "\000")
+	return keyPartId(r.From.KeyPartList)
 }
 
 type RetainedUniqueKey struct {
@@ -295,7 +294,7 @@ func (r RetainedUniqueKey) Diff() []string {
 }
 
 func (r RetainedUniqueKey) Id() string {
-	return strings.Join(r.This.KeyPartList, "\000")
+	return keyPartId(r.This.KeyPartList)
 }
 
 func getUniqueKeyOrder(from []*parser.UniqueKeyDefinition, to []*parser.UniqueKeyDefinition, columnOrder map[string]int) map[string]int {
@@ -309,7 +308,7 @@ func getUniqueKeyOrder(from []*parser.UniqueKeyDefinition, to []*parser.UniqueKe
 		length := len(all[i].KeyPartList)
 		for a := 0; a < length; a++ {
 			if all[i].KeyPartList[a] != all[j].KeyPartList[a] {
-				return columnOrder[all[i].KeyPartList[a]] < columnOrder[all[j].KeyPartList[a]]
+				return columnOrder[all[i].KeyPartList[a].ColumnName] < columnOrder[all[j].KeyPartList[a].ColumnName]
 			}
 		}
 		return true

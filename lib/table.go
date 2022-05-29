@@ -128,6 +128,9 @@ func NewTableAlterations(from []*parser.CreateTableStatement, to []*parser.Creat
 		}
 		// handle foreign key column drop
 		for _, dc := range mt.Columns.Dropped {
+			mt.UniqueKeys.HandleColumnDrop(dc, dc.This.ColumnName)
+			mt.Indexes.HandleColumnDrop(dc, dc.This.ColumnName)
+			mt.FullTextIndexes.HandleColumnDrop(dc, dc.This.ColumnName)
 			mt.ForeignKeys.HandleColumnDrop(dc, dc.This.ColumnName)
 		}
 		// handle FK & PK key column modification
@@ -209,19 +212,19 @@ func NewTableElementAlterations(t1 *parser.CreateTableStatement, t2 *parser.Crea
 	columns := NewColumnAlterations(t1.GetColumns(), t2.GetColumns())
 	for _, c := range columns.Renamed {
 		for _, p := range t1.GetPrimaryKeys() {
-			p.KeyPartList = Replace(p.KeyPartList, c.From.ColumnName, c.To.ColumnName)
+			p.KeyPartList = keyPartReplace(p.KeyPartList, c.From.ColumnName, c.To.ColumnName)
 		}
 		for _, p := range t1.GetUniqueKeys() {
-			p.KeyPartList = Replace(p.KeyPartList, c.From.ColumnName, c.To.ColumnName)
+			p.KeyPartList = keyPartReplace(p.KeyPartList, c.From.ColumnName, c.To.ColumnName)
 		}
 		for _, p := range t1.GetIndexes() {
-			p.KeyPartList = Replace(p.KeyPartList, c.From.ColumnName, c.To.ColumnName)
+			p.KeyPartList = keyPartReplace(p.KeyPartList, c.From.ColumnName, c.To.ColumnName)
 		}
 		for _, p := range t1.GetFullTextIndexes() {
-			p.KeyPartList = Replace(p.KeyPartList, c.From.ColumnName, c.To.ColumnName)
+			p.KeyPartList = keyPartReplace(p.KeyPartList, c.From.ColumnName, c.To.ColumnName)
 		}
 		for _, p := range t1.GetForeignKeys() {
-			p.KeyPartList = Replace(p.KeyPartList, c.From.ColumnName, c.To.ColumnName)
+			p.KeyPartList = keyPartReplace(p.KeyPartList, c.From.ColumnName, c.To.ColumnName)
 		}
 	}
 
@@ -473,14 +476,14 @@ func (r ModifiedTable) Id() string {
 }
 
 func (r *ModifiedTable) preprocessStatements() {
-	for _, pk := range r.PrimaryKeys.Added {
-		for i, _ := range r.Columns.Modified {
-			c := r.Columns.Modified[i]
-			if index(pk.This.KeyPartList, c.From.ColumnName) >= 0 {
-				c.From.ColumnOptions.Nullability = "NOT NULL"
-			}
-		}
-	}
+	//for _, pk := range r.PrimaryKeys.Added {
+	//	for i, _ := range r.Columns.Modified {
+	//		c := r.Columns.Modified[i]
+	//		if Index(pk.This.KeyPartList, c.From.ColumnName) >= 0 {
+	//			c.From.ColumnOptions.Nullability = "NOT NULL"
+	//		}
+	//	}
+	//}
 }
 
 type DroppedTable struct {

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"database/sql"
+	_ "embed"
 	"fmt"
 	"github.com/emirpasic/gods/sets/hashset"
 	_ "github.com/go-sql-driver/mysql"
@@ -11,22 +12,26 @@ import (
 	"strings"
 )
 
+//go:embed pull.tmpl
+var pullUsage string
+
 var IgnoredDatabases = hashset.New("information_schema", "mysql", "performance_schema", "sys")
 
 func init() {
 	c := &cobra.Command{
-		Use:   "fetch <database-url>",
-		Short: "Fetch schemas from database",
-		Args:  cobra.RangeArgs(1, 1),
+		Use:   "pull <database-url>",
+		Short: "Show the current database schema",
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			fetchCmd(args[0])
+			pullCmd(args[0])
 		},
 	}
 
 	rootCmd.AddCommand(c)
+	c.SetUsageTemplate(pullUsage)
 }
 
-func fetchCmd(url string) {
+func pullCmd(url string) {
 	schemas := fetchSchemas(url)
 
 	ePrintf(strings.Repeat("―", width))

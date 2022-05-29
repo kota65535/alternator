@@ -6,7 +6,6 @@ import (
 	"github.com/kota65535/alternator/parser"
 	"reflect"
 	"sort"
-	"strings"
 )
 
 type PrimaryKeyAlterations struct {
@@ -133,9 +132,9 @@ func (r *PrimaryKeyAlterations) HandleColumnRename(fromName string, toName strin
 	// Changing key part is first considered as drop & add a foreign key, so we will find the pair
 	for _, d := range r.Dropped {
 		for _, a := range r.Added {
-			if Contains(d.This.KeyPartList, fromName) && Contains(a.This.KeyPartList, toName) {
+			if keyPartContains(d.This.KeyPartList, fromName) && keyPartContains(a.This.KeyPartList, toName) {
 				// update key parts
-				d.This.KeyPartList = Replace(d.This.KeyPartList, fromName, toName)
+				d.This.KeyPartList = keyPartReplace(d.This.KeyPartList, fromName, toName)
 				if primaryKeyDefsEqual(*d.This, *a.This) {
 					r.Retained = append(r.Retained, &RetainedPrimaryKey{
 						This:       a.This,
@@ -155,13 +154,13 @@ func (r *PrimaryKeyAlterations) HandleColumnRename(fromName string, toName strin
 func (r *PrimaryKeyAlterations) HandleColumnModify(alt Alteration, columnName string) {
 	// Changing key part is first considered as drop & add a foreign key, so we will find the pair
 	for _, d := range r.Dropped {
-		if Contains(d.This.KeyPartList, columnName) {
+		if keyPartContains(d.This.KeyPartList, columnName) {
 			alt.AddDependsOn(d)
 		}
 	}
 
 	for _, a := range r.Added {
-		if Contains(a.This.KeyPartList, columnName) {
+		if keyPartContains(a.This.KeyPartList, columnName) {
 			a.AddDependsOn(alt)
 		}
 	}
@@ -173,9 +172,9 @@ func (r *PrimaryKeyAlterations) HandlePrimaryKeyDrop(alt Alteration, fromName st
 	// Changing key part is first considered as drop & add a foreign key, so we will find the pair
 	for _, d := range r.Dropped {
 		for _, a := range r.Added {
-			if Contains(d.This.KeyPartList, fromName) && Contains(a.This.KeyPartList, toName) {
+			if keyPartContains(d.This.KeyPartList, fromName) && keyPartContains(a.This.KeyPartList, toName) {
 				// update key parts
-				d.This.KeyPartList = Replace(d.This.KeyPartList, fromName, toName)
+				d.This.KeyPartList = keyPartReplace(d.This.KeyPartList, fromName, toName)
 				if primaryKeyDefsEqual(*d.This, *a.This) {
 					r.Retained = append(r.Retained, &RetainedPrimaryKey{
 						This:       a.This,
@@ -212,7 +211,7 @@ func (r AddedPrimaryKey) Diff() []string {
 }
 
 func (r AddedPrimaryKey) Id() string {
-	return strings.Join(r.This.KeyPartList, "\000")
+	return keyPartId(r.This.KeyPartList)
 }
 
 type ModifiedPrimaryKey struct {
@@ -239,7 +238,7 @@ func (r ModifiedPrimaryKey) Diff() []string {
 }
 
 func (r ModifiedPrimaryKey) Id() string {
-	return strings.Join(r.To.KeyPartList, "\000")
+	return keyPartId(r.To.KeyPartList)
 }
 
 type DroppedPrimaryKey struct {
@@ -258,7 +257,8 @@ func (r DroppedPrimaryKey) Diff() []string {
 }
 
 func (r DroppedPrimaryKey) Id() string {
-	return strings.Join(r.This.KeyPartList, "\000")
+	return keyPartId(r.This.KeyPartList)
+
 }
 
 type RetainedPrimaryKey struct {
@@ -277,7 +277,8 @@ func (r RetainedPrimaryKey) Diff() []string {
 }
 
 func (r RetainedPrimaryKey) Id() string {
-	return strings.Join(r.This.KeyPartList, "\000")
+	return keyPartId(r.This.KeyPartList)
+
 }
 
 func getPrimaryKeyOrder(from []*parser.PrimaryKeyDefinition, to []*parser.PrimaryKeyDefinition, columnOrder map[string]int) map[string]int {
@@ -291,7 +292,7 @@ func getPrimaryKeyOrder(from []*parser.PrimaryKeyDefinition, to []*parser.Primar
 		length := len(all[i].KeyPartList)
 		for a := 0; a < length; a++ {
 			if all[i].KeyPartList[a] != all[j].KeyPartList[a] {
-				return columnOrder[all[i].KeyPartList[a]] < columnOrder[all[j].KeyPartList[a]]
+				return columnOrder[all[i].KeyPartList[a].ColumnName] < columnOrder[all[j].KeyPartList[a].ColumnName]
 			}
 		}
 		return true

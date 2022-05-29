@@ -10,21 +10,21 @@ import (
 	"testing"
 )
 
-var DiffTestFixtures = []Fixture{}
+var PlanTestFixtures = []Fixture{}
 
 func init() {
 	dirs := getDirs(RootPath)
 	sort.Strings(dirs)
 	for _, dir := range dirs {
 		for _, db := range Databases {
-			DiffTestFixtures = append(DiffTestFixtures, Fixture{db, dir})
+			PlanTestFixtures = append(PlanTestFixtures, Fixture{db, dir})
 		}
 	}
-	fmt.Println(DiffTestFixtures)
+	fmt.Println(PlanTestFixtures)
 }
 
-func TestDiff(t *testing.T) {
-	for _, fixture := range DiffTestFixtures {
+func TestPlan(t *testing.T) {
+	for _, fixture := range PlanTestFixtures {
 		t.Run(fixture.Name(), func(t *testing.T) {
 			if lib.Contains(Skipped, fixture.Name()) {
 				t.Skip()
@@ -35,7 +35,7 @@ func TestDiff(t *testing.T) {
 			// when
 			err := prepareDb(dir, fixture.Database)
 			require.NoError(t, err)
-			alt := diffCmd(testFile(dir, "to.sql", fixture.Database), url)
+			alt := planCmd(testFile(dir, "to.sql", fixture.Database), url)
 
 			// assert diff
 			s, err := getDiff(dir, fixture.Database)
