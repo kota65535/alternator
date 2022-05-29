@@ -27,7 +27,7 @@ your `$PATH`.
 
 ## Getting Started
 
-1. Create a schema file. Here we create a schema file named `schema.sql` with the following content.
+1. Create a schema file. As an example here, we create `schema.sql` with the following content.
 
 ```sql
 CREATE DATABASE example;
@@ -63,6 +63,7 @@ alternator plan schema.sql mysql://root@localhost/example
   <summary>Show Output</summary>
 
 ```
+Fetching schemas of database 'example'...
 ――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 Schema diff:
 
@@ -135,7 +136,7 @@ Schema diff:
 
   CREATE TABLE `example`.`users`
   (
-~     `id`   int          NOT NULL -> `id` int NOT NULL AUTO_INCREMENT,
+!     `id`   int          NOT NULL -> `id` int NOT NULL AUTO_INCREMENT,
       `name` varchar(100),
       PRIMARY KEY (`id`),
 +     INDEX (`name`)
@@ -144,8 +145,8 @@ Schema diff:
   CREATE TABLE `example`.`blog_posts`
   (
       `id`        int          NOT NULL,
-~     `title`     varchar(100)          -> `title`   varchar(200),
-~     `body`      text                  -> `content` text,
+!     `title`     varchar(100)          -> `title`   varchar(200),
+!     `body`      text                  -> `content` text,
       `author_id` int,
       PRIMARY KEY (`id`),
 -     CONSTRAINT `blog_posts_ibfk_1` FOREIGN KEY `author_id` (`author_id`) REFERENCES `users` (`id`),
