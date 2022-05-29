@@ -181,6 +181,7 @@ CREATE TABLE `example`.`categories`
 </details>
 
 6. Run `alternator apply` to apply the schema change by executing planned SQL statements.
+   Note that the foreign key constraint should be recreated because of the modification of the referencing primary key.
 
 ```sh
 alternator apply schema.sql mysql://root@localhost/example
