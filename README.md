@@ -119,6 +119,7 @@ CREATE TABLE categories # added
 ```
 
 5. Run `alternator plan` to show the schema diff and SQL statements that should be executed.
+   Note that the foreign key `author_id` should be recreated because of the modification of the referencing key.
 
 ```sh
 alternator plan schema.sql mysql://root@localhost/example
@@ -181,7 +182,6 @@ CREATE TABLE `example`.`categories`
 </details>
 
 6. Run `alternator apply` to apply the schema change by executing planned SQL statements.
-   Note that the foreign key constraint should be recreated because of the modification of the referencing primary key.
 
 ```sh
 alternator apply schema.sql mysql://root@localhost/example
