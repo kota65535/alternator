@@ -36,6 +36,7 @@ type CreateTableStatement struct {
 	TableName         string
 	CreateDefinitions []interface{}
 	TableOptions      TableOptions
+	Partitions        PartitionConfig
 }
 
 func (r CreateTableStatement) String() string {
@@ -86,12 +87,15 @@ func (r CreateTableStatement) StringWithFormat(indent int) string {
 	defStrs = addIndent(defStrs, indent)
 
 	tableOptions := strings.Join(addIndent(r.TableOptions.Strings(), indent), "\n")
+	partitionConfigs := strings.Join(addIndent(r.Partitions.Strings(), indent), "\n")
 
-	return fmt.Sprintf("CREATE TABLE %s`%s`\n(\n%s\n)%s;",
+	return fmt.Sprintf("CREATE TABLE %s`%s`\n(\n%s\n)%s%s;",
 		optS(r.DbName, "`%s`."),
 		r.TableName,
 		strings.Join(defStrs, ",\n"),
-		optS(tableOptions, "\n%s"))
+		optS(tableOptions, "\n%s"),
+		optS(partitionConfigs, "\n%s"),
+	)
 }
 
 func (r CreateTableStatement) GetColumns() []*ColumnDefinition {

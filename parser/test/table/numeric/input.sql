@@ -1,15 +1,15 @@
 create table t1
 (
     bit1       bit,
-    bit2       BIT(1)                         NOT NULL DEFAULT 1,
+    bit2       BIT(1)                         NOT NULL DEFAULT 0b001,
     tinyint1   tinyint,
     tinyint2   TINYINT(1) UNSIGNED ZEROFILL   NOT NULL DEFAULT 1,
     bool1      bool,
-    bool2      BOOLEAN                        NOT NULL DEFAULT 1,
+    bool2      BOOLEAN                        NOT NULL DEFAULT TRUE,
     smallint1  smallint,
-    smallint2  smallINT(1) UNSIGNED ZEROFILL  NOT NULL DEFAULT 1,
+    smallint2  SMALLINT(1) UNSIGNED ZEROFILL  NOT NULL DEFAULT 0x123,
     mediumint1 mediumint,
-    mediumint2 MEDIUMINT(1) UNSIGNED ZEROFILL NOT NULL DEFAULT 1,
+    mediumint2 MEDIUMINT(1) UNSIGNED ZEROFILL NOT NULL DEFAULT x'0123',
     `int1`     int,
     `int2`     INT(1) UNSIGNED ZEROFILL       NOT NULL DEFAULT 1,
     bigint1    bigint,
@@ -18,7 +18,8 @@ create table t1
     decimal2   DECIMAL(2),
     decimal3   DEC(2, 1) UNSIGNED ZEROFILL    NOT NULL DEFAULT 1,
     float1     float,
-    float2     FLOAT(2, 1) UNSIGNED ZEROFILL  NOT NULL DEFAULT 1.1,
+    float2     FLOAT(2, 1) UNSIGNED ZEROFILL  NOT NULL DEFAULT (RAND() * RAND()),
     double1    double,
-    double2    DOUBLE(2, 1) UNSIGNED ZEROFILL NOT NULL DEFAULT 1.1
+    double2    DOUBLE(2, 1) UNSIGNED ZEROFILL NOT NULL DEFAULT 1.1,
+    double3    DOUBLE GENERATED ALWAYS AS (SQRT(double1 * double2))
 );

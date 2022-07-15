@@ -1,7 +1,7 @@
 CREATE TABLE `t1`
 (
     `date1`      date,
-    `date2`      date         NOT NULL,
+    `date2`      date         NOT NULL DEFAULT (CURRENT_DATE + INTERVAL 1 YEAR),
     `datetime1`  datetime,
     `datetime2`  datetime(1)  NOT NULL,
     `timestamp1` timestamp,

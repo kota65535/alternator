@@ -5,7 +5,7 @@ CREATE TABLE `t1`
     `varchar1`    varchar(1),
     `varchar2`    varchar(2) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin     NOT NULL DEFAULT 'a',
     `binary1`     binary,
-    `binary2`     binary(1)                                                NOT NULL DEFAULT 'a',
+    `binary2`     binary(1)                                                NOT NULL DEFAULT (uuid_to_bin(uuid())),
     `varbinary1`  varbinary(1),
     `varbinary2`  varbinary(2)                                             NOT NULL DEFAULT 'a',
     `tinyblob1`   tinyblob,

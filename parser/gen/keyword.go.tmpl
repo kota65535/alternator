@@ -1,0 +1,7 @@
+package parser
+
+var Keywords = map[int]string{
+    {{ range .Tokens }}
+    {{- . }}: "{{- . }}",
+    {{ end }}
+}

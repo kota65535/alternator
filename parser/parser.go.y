@@ -4,12 +4,17 @@ package parser
 import (
 	"github.com/kota65535/alternator/lexer"
 	"github.com/imdario/mergo"
+	"fmt"
+	"strings"
 )
 %}
 
 %union{
+empty      struct{}
 statements []Statement
 statement Statement
+partitionDefinitionList []PartitionDefinition
+subpartitionDefinitionList []SubpartitionDefinition
 keyPartList []KeyPart
 list []interface{}
 item interface{}
@@ -27,6 +32,16 @@ token *lexer.Token
   	CreateDatabaseStatement
   	UseStatement
   	CreateTableStatement
+
+%type<partitionDefinitionList>
+	OptPartitionDefinitionList
+	PartitionDefinitionList
+	PartitionDefinitions
+
+%type<subpartitionDefinitionList>
+	OptSubpartitionDefinitionList
+	SubpartitionDefinitionList
+	SubpartitionDefinitions
 
 %type<keyPartList>
 	KeyPartList
@@ -48,10 +63,6 @@ token *lexer.Token
 	ColumnOption
   	TableOptions
   	TableOption
-  	PartitionDefinitions
-  	PartitionDefinition
-  	PartitionOptions
-  	PartitionOption
 
   	// DataType
   	DataType
@@ -61,7 +72,8 @@ token *lexer.Token
   	FloatingPointType
   	DateAndTimeType
   	StringType
-  	OptReferenceDefinition
+  	JsonType
+  	SpatialType
   	ReferenceDefinition
   	ReferenceOptions
   	ReferenceOption
@@ -69,7 +81,7 @@ token *lexer.Token
   	CheckConstraintOptions
   	CheckConstraintOption
 
-  	// Create Definitions
+  	// Index, Constraints
   	IndexDefinition
     FullTextIndexDefinition
   	IndexOptions
@@ -78,17 +90,33 @@ token *lexer.Token
     UniqueKeyDefinition
    	ForeignKeyDefinition
    	CheckConstraintDefinition
-
   	KeyPart
-  	// ?
+
+  	// Partitions
+  	OptPartitionConfig
+  	PartitionConfig
   	PartitionBy
+  	OptSubpartitionBy
+  	SubpartitionBy
+  	PartitionByHash
+  	PartitionByKey
+  	PartitionByRange
+  	PartitionByList
   	OptAlgorithm
+  	Algorithm
+  	PartitionDefinition
+  	PartitionOptions
+  	PartitionOption
+ 	SubpartitionDefinition
 
 %type<stringList>
 	StringLiteralList
 	StringLiterals
 	IdentifierList
 	Identifiers
+	ExpressionList
+	Expressions
+	OptExpressions
   	OptFieldLenAndScale
   	FieldLenAndScale
   	OptFieldLenAndOptScale
@@ -96,15 +124,44 @@ token *lexer.Token
   	TableSpace
   	TableUnion
   	TableName
+  	PartitionValues
 
 %type<stringItem>
 	// Literal etc
+	Literal
+	BooleanLiteral
 	BitLiteral
 	IntLiteral
 	FloatLiteral
+	HexLiteral
 	StringLiteral
 	Identifier
+	BitExpression
 	Expression
+	BooleanPrimaryExpression
+	PredicateExpression
+	SimpleExpression
+	MatchExpression
+	OptSearchModifier
+	SearchModifier
+	CaseExpression
+	WhenClauses
+	WhenClause
+	OptElseClause
+	ElseClause
+	OptIntroducer
+	Introducer
+	ComparisonOp
+	IntervalExpression
+	TimeUnit
+	FunctionCall
+	FunctionCallGeneric
+	FunctionCallKeyword
+	FunctionNameConflict
+	FunctionNameOptionalBraces
+	FunctionNameDatetimePrecision
+	OptBraces
+  	OptNot
 
   	// Database
   	DbName
@@ -117,15 +174,17 @@ token *lexer.Token
   	FieldLen
 
 	// Column Options
-  	OptNullability
   	Nullability
+  	DefaultDefinition
   	DefaultValue
-  	OptVisibility
   	Visibility
   	OptCharset
   	Charset
   	OptCollate
   	Collate
+  	GeneratedAlwaysAs
+  	GeneratedColumnType
+  	Srid
 
   	// Index
   	OptIndexName
@@ -172,273 +231,303 @@ token *lexer.Token
   	OptStorage
   	Storage
 
+  	// Partition Options
+  	OptPartitions
+  	Partitions
+  	OptSubpartitions
+  	Subpartitions
+  	PartitionStorageEngine
+  	PartitionTableSpace
+
+  	Variable
+
+  	NotKwd
+  	AndKwd
+  	OrKwd
+  	DivKwd
+  	ModKwd
 
 %type<keyword>
 	// Sign
   	OptEq
 
 	// Create Statements
-  	CreateKwd
-  	UseKwd
   	OptTemporaryKwd
-  	TemporaryKwd
   	DatabaseKwd
-  	TableKwd
   	OptIfNotExistsKwd
-  	IfNotExistsKwd
 
   	// Database Options
   	OptDefaultKwd
-  	DefaultKwd
   	CharsetKwd
-  	CollateKwd
-  	EncryptionKwd
 
   	// Numeric Types
-	BitKwd
-	TinyIntKwd
 	BoolKwd
-	SmallIntKwd
-	MediumIntKwd
 	IntKwd
-	BigIntKwd
 	DecimalKwd
-	FloatKwd
 	DoubleKwd
 
 	// String Types
   	CharKwd
-  	VarcharKwd
-  	BinaryKwd
-  	VarBinaryKwd
-  	TinyBlobKwd
-  	TinyTextKwd
-  	BlobKwd
-  	TextKwd
-  	MediumBlobKwd
-  	MediumTextKwd
-  	LongBlobKwd
-  	LongTextKwd
-  	EnumKwd
-  	SetKwd
 
   	// Column Options
   	OptUnsignedKwd
-  	UnsignedKwd
   	OptZerofillKwd
-  	ZerofillKwd
-  	OptAutoIncrementKwd
   	ColumnUniqueKwd
   	ColumnPrimaryKwd
+  	GeneratedAlwaysAsKwd
 
 	// Index
   	IndexKwd
   	FullTextIndexKwd
   	UniqueKeyKwd
-  	PrimaryKeyKwd
-  	KeyBlockSizeKwd
-  	UsingKwd
-  	WithParserKwd
-  	CommentKwd
 
   	// Foreign Key
-  	ForeignKeyKwd
-
-  	// Table Options
-  	AutoExtendedSizeKwd
-  	AutoIncrementKwd
-  	AvgRowLengthKwd
-  	ChecksumKwd
-  	CompressionKwd
-  	ConnectionKwd
-  	DelayKeyWriteKwd
-  	DataDirectoryKwd
-  	EngineKwd
-  	EngineAttributeKwd
-  	IndexDirectoryKwd
-  	InsertMethodKwd
-  	MaxRowsKwd
-  	MinRowsKwd
-  	PackKeysKwd
-  	PasswordKwd
-  	RowFormatKwd
-  	SecondaryEngineAttributeKwd
-  	StatsAutoRecalcKwd
-  	StatsPersistentKwd
-  	StatsSamplePagesKwd
-  	TableSpaceKwd
-  	StorageKwd
-  	UnionKwd
 
   	// Partition Options
-  	PartitionByKwd
-  	LinearKwd
-  	AlgorithmKwd
-  	RangeKwd
-  	ListKwd
-  	LinearKwdOpt
-  	PartitionsKwd
-  	SubpartitionByKwd
-  	SubpartitionsKwd
-  	PartitionKwd
-  	UniqueKeyKwd
-
+  	OptLinearKwd
+  	PartitionStorageEngineKwd
 
 %token<token>
+	// Keywords
+	AGAINST
+    ALGORITHM
+    ALWAYS
+    AND
+    AS
+    ASC
+    AUTOEXTENDED_SIZE
+    AUTO_INCREMENT
+    AVG_ROW_LENGTH
+    BETWEEN
+    BIGINT
+    BINARY
+    BIT
+    BLOB
+    BOOL
+    BOOLEAN
+    BY
+    CASCADE
+    CASE
+    CHAR
+    CHARACTER
+    CHARSET
+    CHECK
+    CHECKSUM
+    COLLATE
+    COLUMNS
+    COMMENT
+    COMPRESSION
+    CONNECTION
+    CONSTRAINT
+    CREATE
+    CURRENT_DATE
+    CURRENT_ROLE
+    CURRENT_TIME
+    CURRENT_TIMESTAMP
+    CURRENT_USER
+    DATA
+    DATABASE
+    DATE
+    DATETIME
+    DAY
+    DAY_HOUR
+    DAY_MICROSECOND
+    DAY_MINUTE
+    DAY_SECOND
+    DEC
+    DECIMAL
+    DEFAULT
+    DELAY_KEY_WRITE
+    DELETE
+    DESC
+    DIRECTORY
+    DIV
+    DOUBLE
+    ELSE
+    ENCRYPTION
+    END
+    ENFORCED
+    ENGINE
+    ENGINE_ATTRIBUTE
+    ENUM
+    EXISTS
+    EXPANSION
+    EXPRESSION
+    FALSE
+    FIXED
+    FLOAT
+    FOREIGN
+    FULLTEXT
+    GENERATED
+    GEOMETRY
+    GEOMETRYCOLLECTION
+    HASH
+    HOUR
+    HOUR_MICROSECOND
+    HOUR_MINUTE
+    HOUR_SECOND
+    IF
+    IN
+    INDEX
+    INSERT_METHOD
+    INT
+    INTEGER
+    INTERVAL
+    INVISIBLE
+    IS
+    JSON
+    KEY
+    KEY_BLOCK_SIZE
+    LANGUAGE
+    LESS
+    LIKE
+    LINEAR
+    LINESTRING
+    LIST
+    LOCALTIME
+    LOCALTIMESTAMP
+    LONGBLOB
+    LONGTEXT
+    MATCH
+    MAXVALUE
+    MAX_ROWS
+    MEDIUMBLOB
+    MEDIUMINT
+    MEDIUMTEXT
+    MICROSECOND
+    MINUS
+    MINUTE
+    MINUTE_MICROSECOND
+    MINUTE_SECOND
+    MIN_ROWS
+    MOD
+    MODE
+    MONTH
+    MULTILINESTRING
+    MULTIPOINT
+    MULTIPOLYGON
+    NATURAL
+    NOT
+    NOT_ENFORCED
+    NO_ACTION
+    NULL
+    ON
+    OR
+    PACK_KEYS
+    PARSER
+    PARTITION
+    PARTITIONS
+    PASSWORD
+    PIPE
+    PLUS
+    POINT
+    POLYGON
+    PRIMARY
+    QSTN
+    QUARTER
+    QUERY
+    RANGE
+    REAL
+    REFERENCES
+    REGEXP
+    RESTRICT
+    ROW
+    ROW_FORMAT
+    SCHEMA
+    SECOND
+    SECONDARY_ENGINE_ATTRIBUTE
+    SECOND_MICROSECOND
+    SET
+    SMALLINT
+    SOUNDS
+    SRID
+    STATS_AUTO_RECALC
+    STATS_PERSISTENT
+    STATS_SAMPLE_PAGES
+    STORAGE
+    STORED
+    SUBPARTITION
+    SUBPARTITIONS
+    TABLE
+    TABLESPACE
+    TEMPORARY
+    TEXT
+    THAN
+    THEN
+    TIME
+    TIMESTAMP
+    TINYBLOB
+    TINYINT
+    TINYTEXT
+    TRUE
+    UNION
+    UNIQUE
+    UNKNOWN
+    UNSIGNED
+    UPDATE
+    USE
+    USING
+    UTC_DATE
+    UTC_TIME
+    UTC_TIMESTAMP
+    VALUES
+    VARBINARY
+    VARCHAR
+    VIRTUAL
+    VISIBLE
+    WEEK
+    WHEN
+    WITH
+    XOR
+    YEAR
+    YEAR_MONTH
+    ZEROFILL
+
+
 	// Signs
-  	LP
-  	RP
-  	COMMA
-  	SEMICOLON
-  	EQ
-  	DOT
-
-  	// Create Statements
-	CREATE
-  	USE
-  	TEMPORARY
-  	DATABASE
-  	SCHEMA
-  	TABLE
-  	IF_NOT_EXISTS
-
-  	// Database Options
-  	DEFAULT
-	CHARSET
-  	CHARACTER
-	SET
-	COLLATE
-  	ENCRYPTION
-
-  	// Numeric Type
-  	BIT
-  	TINYINT
-  	BOOL
-  	BOOLEAN
-  	SMALLINT
-  	MEDIUMINT
-  	INT
-  	INTEGER
-  	BIGINT
-  	UNSIGNED
-  	ZEROFILL
-  	DECIMAL
-  	DEC
-  	FIXED
-  	FLOAT
-  	DOUBLE
-  	REAL
-
-	// String Type
-  	CHAR
-	VARCHAR
-	BINARY
-	VARBINARY
-	TINYBLOB
-	TINYTEXT
-	BLOB
-	TEXT
-	MEDIUMBLOB
-	MEDIUMTEXT
-	LONGBLOB
-	LONGTEXT
-	ENUM
-
-  	// DateAndTime Types
-  	DATE
-  	TIME
-  	DATETIME
-  	TIMESTAMP
-  	YEAR
-
-  	// Column Options
-	NULL
-	NOT_NULL
-	VISIBLE
-	INVISIBLE
-	AUTO_INCREMENT
-	UNIQUE
-	PRIMARY
-	KEY
-	CURRENT_TIMESTAMP
-
-	// Index
-	INDEX
-	ASC
-	DESC
-	USING
-	FULLTEXT
-	KEY_BLOCK_SIZE
-	WITH
-	PARSER
-
-	// Foreign Key
-	CONSTRAINT
-	FOREIGN
-	REFERENCES
-	MATCH
-	ON_DELETE
-	ON_UPDATE
-	CASCADE
-	RESTRICT
-//	SET_NULL
-//	SET_DEFAULT
-	NO_ACTION
-	REFERENCE_OPTION
-
-	// Check Constraint
-	CHECK
-	ENFORCED
-	NOT_ENFORCED
-
-	// Table Options
-  	AUTOEXTENDED_SIZE
-  	AVG_ROW_LENGTH
-  	CHECKSUM
-	COMMENT
-  	COMPRESSION
-  	CONNECTION
-  	DELAY_KEY_WRITE
-  	DATA
-  	DIRECTORY
-  	ENGINE
-  	ENGINE_ATTRIBUTE
-  	INSERT_METHOD
-  	MAX_ROWS
-  	MIN_ROWS
-  	PACK_KEYS
-  	PASSWORD
-  	ROW_FORMAT
-  	SECONDARY_ENGINE_ATTRIBUTE
-  	STATS_AUTO_RECALC
-  	STATS_PERSISTENT
-  	STATS_SAMPLE_PAGES
-  	TABLESPACE
-  	STORAGE
-  	UNION
-
-	// Literals etc
-  	INT_NUM
-  	FLOAT_NUM
-  	BIT_NUM
-	STRING
-  	IDENTIFIER
-  	QUOTED_IDENTIFIER
-	EXPRESSION
-
-  	// Partition Options
-  	PARTITION
-  	BY
-  	PARTITIONS
-  	Subpartition
-  	LINEAR
-  	HASH
-  	COLUMNS
-  	ALGORITHM
-  	RANGE
-  	LIST
-  	SUBPARTITIONS
-  	SUBPARTITION
+	lp
+    rp
+    lcb
+    rcb
+    comma
+    semicolon
+    eq
+    dot
+    gt
+    gte
+    lt
+    lte
+    ne
+    ne2
+    nseq
+    tilde
+    and
+    and2
+    or
+    or2
+    rshift
+    lshift
+    plus
+    minus
+    mult
+    div
+    mod
+    hat
+    excl
+    qstn
+	
+	// Literals
+	BIT_STR
+    BIT_NUM
+    INT_NUM
+    HEX_STR
+    HEX_NUM
+    FLOAT_NUM
+    STRING
+    IDENTIFIER
+    LOCAL_VAR
+    GLOBAL_VAR
+    QUOTED_IDENTIFIER
 
 %right NOT
 
@@ -455,7 +544,7 @@ Statements:
 		$$ = []Statement{$1}
 		yylex.(*Parser).result = $$
 	}
-|	Statements SEMICOLON Statement
+|	Statements semicolon Statement
 	{
 		if $3 != nil {
 		  $1 = append($1, $3)
@@ -483,7 +572,7 @@ Statement:
 	}
 
 UseStatement:
-	UseKwd DbName
+	USE DbName
 	{
 		$$ = UseStatement{
 			DbName: $2,
@@ -491,7 +580,7 @@ UseStatement:
 	}
 
 CreateDatabaseStatement:
-	CreateKwd DatabaseKwd OptIfNotExistsKwd DbName DatabaseOptions
+	CREATE DatabaseKwd OptIfNotExistsKwd DbName DatabaseOptions
 	{
 		$$ = CreateDatabaseStatement{
         	IfNotExists: $3,
@@ -549,19 +638,19 @@ DefaultCharset:
 	}
 
 DefaultCollate:
-	OptDefaultKwd CollateKwd OptEq Identifier
+	OptDefaultKwd COLLATE OptEq Identifier
 	{
 		$$ = $4
 	}
 
 DefaultEncryption:
-	OptDefaultKwd EncryptionKwd OptEq StringLiteral
+	OptDefaultKwd ENCRYPTION OptEq StringLiteral
 	{
 		$$ = $4
 	}
 
 CreateTableStatement:
-	CreateKwd OptTemporaryKwd TableKwd OptIfNotExistsKwd TableName CreateDefinitionList TableOptions
+	CREATE OptTemporaryKwd TABLE OptIfNotExistsKwd TableName CreateDefinitionList TableOptions OptPartitionConfig
 	{
         	$$ = CreateTableStatement{
         		DbName: $5[0],
@@ -570,6 +659,7 @@ CreateTableStatement:
 		   		TableName: $5[1],
 		   		CreateDefinitions: $6,
 		   		TableOptions: $7.(TableOptions),
+		   		Partitions: $8.(PartitionConfig),
         	}
     }
 
@@ -578,13 +668,13 @@ TableName:
 	{
 		$$ = []string{"", $1}
 	}
-|	Identifier DOT Identifier
+|	Identifier dot Identifier
 	{
 		$$ = []string{$1, $3}
 	}
 
 CreateDefinitionList:
-    LP CreateDefinitions RP
+    lp CreateDefinitions rp
     {
 		$$ = $2
     }
@@ -594,7 +684,7 @@ CreateDefinitions:
     {
 		$$ = []interface{}{$1}
     }
-|   CreateDefinitions COMMA CreateDefinition
+|   CreateDefinitions comma CreateDefinition
     {
 		$$ = append($1, $3)
     }
@@ -656,6 +746,14 @@ DataType:
 	{
 		$$ = $1
 	}
+|	JsonType
+	{
+		$$ = $1
+	}
+|	SpatialType
+	{
+		$$ = $1
+	}
 
 NumericType:
 	IntegerType
@@ -672,14 +770,14 @@ NumericType:
 	}
 
 IntegerType:
-	BitKwd OptFieldLen
+	BIT OptFieldLen
 	{
 		$$ = IntegerType{
 			Name: "bit",
 			FieldLen: $2,
 		}
 	}
-| 	TinyIntKwd OptFieldLen OptUnsignedKwd OptZerofillKwd
+| 	TINYINT OptFieldLen OptUnsignedKwd OptZerofillKwd
 	{
 		$$ = IntegerType{
 			Name: "tinyint",
@@ -696,7 +794,7 @@ IntegerType:
 			FieldLen: "1",
 		}
 	}
-|	SmallIntKwd OptFieldLen OptUnsignedKwd OptZerofillKwd
+|	SMALLINT OptFieldLen OptUnsignedKwd OptZerofillKwd
 	{
 		$$ = IntegerType{
 			Name: "smallint",
@@ -705,7 +803,7 @@ IntegerType:
 			Zerofill: $4,
 		}
 	}
-|	MediumIntKwd OptFieldLen OptUnsignedKwd OptZerofillKwd
+|	MEDIUMINT OptFieldLen OptUnsignedKwd OptZerofillKwd
 	{
 		$$ = IntegerType{
 			Name: "mediumint",
@@ -723,7 +821,7 @@ IntegerType:
 			Zerofill: $4,
 		}
 	}
-|	BigIntKwd OptFieldLen OptUnsignedKwd OptZerofillKwd
+|	BIGINT OptFieldLen OptUnsignedKwd OptZerofillKwd
 	{
 		$$ = IntegerType{
 			Name: "bigint",
@@ -762,7 +860,7 @@ FloatingPointType:
 		   fieldLen = $2[0]
 		   fieldScale = $2[1]
 	 	}
-		$$ = FixedPointType{
+		$$ = FloatingPointType{
 			Name: "float",
 			FieldLen: fieldLen,
 			FieldScale: fieldScale,
@@ -770,7 +868,7 @@ FloatingPointType:
 			Zerofill: $4,
 		}
     }
-|   DOUBLE OptFieldLenAndScale OptUnsignedKwd OptZerofillKwd
+|   DoubleKwd OptFieldLenAndScale OptUnsignedKwd OptZerofillKwd
 	{
     	fieldLen := ""
     	fieldScale := ""
@@ -778,7 +876,7 @@ FloatingPointType:
 		   fieldLen = $2[0]
 		   fieldScale = $2[1]
 	 	}
-		$$ = FixedPointType{
+		$$ = FloatingPointType{
 			Name: "double",
 			FieldLen: fieldLen,
 			FieldScale: fieldScale,
@@ -797,7 +895,7 @@ OptFieldLen:
     }
 
 FieldLen:
-	LP IntLiteral RP
+	lp IntLiteral rp
 	{
 		$$ = $2
 	}
@@ -812,7 +910,7 @@ OptFieldLenAndScale:
 	}
 
 FieldLenAndScale:
-	LP IntLiteral COMMA IntLiteral RP
+	lp IntLiteral comma IntLiteral rp
 	{
 		$$ = []string{$2, $4}
 	}
@@ -827,11 +925,11 @@ OptFieldLenAndOptScale:
     }
 
 FieldLenAndOptScale:
-	LP IntLiteral RP
+	lp IntLiteral rp
 	{
 		$$ = []string{$2}
 	}
-|	LP IntLiteral COMMA IntLiteral RP
+|	lp IntLiteral comma IntLiteral rp
 	{
 		$$ = []string{$2, $4}
 	}
@@ -902,7 +1000,7 @@ StringType:
 			Collation: $4,
 		}
 	}
-|	VarcharKwd FieldLen OptCharset OptCollate
+|	VARCHAR FieldLen OptCharset OptCollate
 	{
 		$$ = StringType{
 			Name: "varchar",
@@ -911,7 +1009,7 @@ StringType:
 			Collation: $4,
 		}
 	}
-|	BinaryKwd OptFieldLen
+|	BINARY OptFieldLen
 	{
 		fieldLen := ""
 		if $2 != "" {
@@ -922,20 +1020,20 @@ StringType:
 			FieldLen: fieldLen,
 		}
 	}
-|	VarBinaryKwd FieldLen
+|	VARBINARY FieldLen
 	{
 		$$ = StringType{
 			Name: "varbinary",
 			FieldLen: $2,
 		}
 	}
-| 	TinyBlobKwd
+| 	TINYBLOB
 	{
 		$$ = StringType{
 			Name: "tinyblob",
 		}
 	}
-| 	TinyTextKwd OptCharset OptCollate
+| 	TINYTEXT OptCharset OptCollate
 	{
 		$$ = StringType{
 			Name: "tinytext",
@@ -943,7 +1041,7 @@ StringType:
 			Collation: $3,
 		}
 	}
-| 	BlobKwd OptFieldLen
+| 	BLOB OptFieldLen
 	{
 		fieldLen := ""
 		if $2 != "" {
@@ -954,7 +1052,7 @@ StringType:
 			FieldLen: fieldLen,
 		}
 	}
-| 	TextKwd OptFieldLen OptCharset OptCollate
+| 	TEXT OptFieldLen OptCharset OptCollate
 	{
 		fieldLen := ""
 		if $2 != "" {
@@ -967,13 +1065,13 @@ StringType:
 			Collation: $4,
 		}
 	}
-| 	MediumBlobKwd
+| 	MEDIUMBLOB
 	{
 		$$ = StringType{
 			Name: "mediumblob",
 		}
 	}
-| 	MediumTextKwd OptCharset OptCollate
+| 	MEDIUMTEXT OptCharset OptCollate
 	{
 		$$ = StringType{
 			Name: "mediumtext",
@@ -981,13 +1079,13 @@ StringType:
 			Collation: $3,
 		}
 	}
-| 	LongBlobKwd
+| 	LONGBLOB
 	{
 		$$ = StringType{
 			Name: "longblob",
 		}
 	}
-| 	LongTextKwd OptCharset OptCollate
+| 	LONGTEXT OptCharset OptCollate
 	{
 		$$ = StringType{
 			Name: "longtext",
@@ -995,7 +1093,7 @@ StringType:
 			Collation: $3,
 		}
 	}
-|	EnumKwd StringLiteralList OptCharset OptCollate
+|	ENUM StringLiteralList OptCharset OptCollate
 	{
 		$$ = StringListType{
 			Name: "enum",
@@ -1004,15 +1102,74 @@ StringType:
 			Collation: $4,
 		}
 	}
-|	SetKwd StringLiteralList OptCharset OptCollate
+|	SET StringLiteralList OptCharset OptCollate
     {
   		 $$ = StringListType{
-  			  Name: "set",
-  			  Values: $2,
-  			  Charset: $3,
-  			  Collation: $4,
+  			 Name: "set",
+  			 Values: $2,
+  			 Charset: $3,
+  			 Collation: $4,
   		 }
     }
+
+JsonType:
+	JSON
+	{
+		$$ = JsonType{
+			Name: "json",
+		}
+	}
+
+
+SpatialType:
+	GEOMETRY
+	{
+		$$ = SpatialType{
+			Name: "geometry",
+		}
+	}
+|	POINT
+	{
+		$$ = SpatialType{
+			Name: "point",
+		}
+	}
+|	LINESTRING
+	{
+		$$ = SpatialType{
+			Name: "linestring",
+		}
+	}
+|	POLYGON
+	{
+		$$ = SpatialType{
+			Name: "polygon",
+		}
+	}
+|	MULTIPOINT
+	{
+		$$ = SpatialType{
+			Name: "multipoint",
+		}
+	}
+|	MULTILINESTRING
+	{
+		$$ = SpatialType{
+			Name: "multilinestring",
+		}
+	}
+|	MULTIPOLYGON
+	{
+		$$ = SpatialType{
+			Name: "multipolygon",
+		}
+	}
+|	GEOMETRYCOLLECTION
+	{
+		$$ = SpatialType{
+			Name: "geometrycollection",
+		}
+	}
 
 ColumnOptions:
 	{
@@ -1037,7 +1194,7 @@ ColumnOption:
 			Nullability: $1,
 		}
 	}
-|	DefaultValue
+|	DefaultDefinition
 	{
 		$$ = ColumnOptions{
 			Default: $1,
@@ -1049,10 +1206,10 @@ ColumnOption:
 			Visibility: $1,
 		}
 	}
-|	AutoIncrementKwd
+|	AUTO_INCREMENT
 	{
 		$$ = ColumnOptions{
-			AutoIncrement: $1,
+			AutoIncrement: true,
 		}
 	}
 |	ColumnUniqueKwd
@@ -1065,6 +1222,12 @@ ColumnOption:
 	{
 		$$ = ColumnOptions{
 			Primary: $1,
+		}
+	}
+|	Comment
+	{
+		$$ = ColumnOptions{
+			Comment: $1,
 		}
 	}
 | 	ReferenceDefinition
@@ -1085,59 +1248,53 @@ ColumnOption:
 			OnUpdate: $1,
 		}
 	}
-
-OptNullability:
+|	GeneratedAlwaysAs
 	{
-		$$ = ""
+		$$ = ColumnOptions{
+			GeneratedAs: $1,
+		}
 	}
-|	Nullability
+|	GeneratedColumnType
 	{
-		$$ = $1
+		$$ = ColumnOptions{
+			GeneratedColumnType: $1,
+		}
+	}
+|	Srid
+	{
+		$$ = ColumnOptions{
+			Srid: $1,
+		}
 	}
 
 Nullability:
 	NULL
 	{
-		$$ = $1.Literal
+		$$ = "NULL"
 	}
-|	NOT_NULL
+|	NOT NULL
 	{
-		$$ = $1.Literal
+		$$ = "NOT NULL"
+	}
+
+DefaultDefinition:
+	DEFAULT DefaultValue
+	{
+		$$ = $2
 	}
 
 DefaultValue:
-	DefaultKwd CURRENT_TIMESTAMP
-	{
-		$$ = "CURRENT_TIMESTAMP"
-	}
-|	DefaultKwd StringLiteral
-	{
-		$$ = "'" + $2 + "'"
-	}
-|	DefaultKwd IntLiteral
-	{
-		$$ = $2
-	}
-|	DefaultKwd FloatLiteral
-	{
-		$$ = $2
-	}
-|	DefaultKwd BitLiteral
-	{
-		$$ = $2
-	}
-|	DefaultKwd NULL
-	{
-		$$ = ""
-	}
-
-OptVisibility:
-	{
-		$$ = ""
-	}
-|	Visibility
+	Literal
 	{
 		$$ = $1
+	}
+|	lp Expression rp
+	{
+		$$ = fmt.Sprintf("(%s)", $2)
+	}
+|	FunctionNameDatetimePrecision OptFieldLen
+	{
+		$$ = compactJoin([]string{$1, $2}, "")
 	}
 
 Visibility:
@@ -1180,6 +1337,28 @@ Collate:
 		$$ = $2
 	}
 
+GeneratedAlwaysAs:
+	GeneratedAlwaysAsKwd lp Expression rp
+	{
+		$$ = fmt.Sprintf("(%s)", $3)
+	}
+
+GeneratedColumnType:
+	VIRTUAL
+	{
+		$$ = "VIRTUAL"
+	}
+|	STORED
+	{
+		$$ = "STORED"
+	}
+
+Srid:
+	SRID IntLiteral
+	{
+		$$ = $2
+	}
+
 IndexDefinition:
 	IndexKwd OptIndexName KeyPartList IndexOptions
 	{
@@ -1201,12 +1380,12 @@ FullTextIndexDefinition:
 	}
 
 PrimaryKeyDefinition:
-	OptConstraint PrimaryKeyKwd KeyPartList IndexOptions
+	OptConstraint PRIMARY KEY KeyPartList IndexOptions
 	{
 		$$ = &PrimaryKeyDefinition{
 			ConstraintName: $1,
-			KeyPartList: $3,
-			IndexOptions: $4.(IndexOptions),
+			KeyPartList: $4,
+			IndexOptions: $5.(IndexOptions),
 		}
 	}
 
@@ -1222,13 +1401,13 @@ UniqueKeyDefinition:
 	}
 
 ForeignKeyDefinition:
-	OptConstraint ForeignKeyKwd OptIndexName KeyPartList ReferenceDefinition
+	OptConstraint FOREIGN KEY OptIndexName KeyPartList ReferenceDefinition
 	{
 		$$ = &ForeignKeyDefinition{
 			ConstraintName: $1,
-			IndexName: $3,
-			KeyPartList: $4,
-			ReferenceDefinition: $5.(ReferenceDefinition),
+			IndexName: $4,
+			KeyPartList: $5,
+			ReferenceDefinition: $6.(ReferenceDefinition),
 		}
 	}
 
@@ -1242,7 +1421,7 @@ OptIndexName:
 	}
 
 KeyPartList:
-	LP KeyParts RP
+	lp KeyParts rp
 	{
 		$$ = $2
 	}
@@ -1252,7 +1431,7 @@ KeyParts:
 	{
 		$$ = []KeyPart{$1.(KeyPart)}
 	}
-|	KeyParts COMMA KeyPart
+|	KeyParts comma KeyPart
 	{
 		$$ = append($1, $3.(KeyPart))
 	}
@@ -1274,9 +1453,16 @@ KeyPart:
 	Identifier OptFieldLen KeyOrder
 	{
 		$$ = KeyPart{
-			ColumnName: $1,
+			Column: $1,
 			Length: $2,
 			Order: $3,
+		}
+	}
+|	Expression KeyOrder
+	{
+		$$ = KeyPart{
+			Column: $1,
+			Order: $2,
 		}
 	}
 
@@ -1329,36 +1515,27 @@ IndexOption:
 	}
 
 KeyBlockSize:
-	KeyBlockSizeKwd OptEq IntLiteral
+	KEY_BLOCK_SIZE OptEq IntLiteral
 	{
 		$$ = $3
 	}
 
 IndexType:
-	UsingKwd Identifier
+	USING Identifier
 	{
 		$$ = $2
 	}
 
 Parser:
-	WithParserKwd Identifier
+	WITH PARSER Identifier
 	{
-		$$ = $2
+		$$ = $3
 	}
 
 Comment:
-	CommentKwd StringLiteral
+	COMMENT StringLiteral
 	{
 		$$ = $2
-	}
-
-OptReferenceDefinition:
-	{
-		$$ = nil
-	}
-|	ReferenceDefinition
-	{
-		$$ = $1
 	}
 
 ReferenceDefinition:
@@ -1414,15 +1591,15 @@ Match:
 	}
 
 OnDelete:
-	ON_DELETE ReferencialAction
+	ON DELETE ReferencialAction
 	{
-		$$ = $2
+		$$ = $3
 	}
 
 OnUpdate:
-	ON_UPDATE ReferencialAction
+	ON UPDATE ReferencialAction
 	{
-		$$ = $2
+		$$ = $3
 	}
 
 ReferencialAction:
@@ -1699,145 +1876,145 @@ TableOption:
 	}
 
 AutoExtendedSize:
-	AutoExtendedSizeKwd OptEq IntLiteral
+	AUTOEXTENDED_SIZE OptEq IntLiteral
 	{
 		$$ = $3
 	}
 
 AutoIncrementValue:
-	AutoIncrementKwd OptEq IntLiteral
+	AUTO_INCREMENT OptEq IntLiteral
 	{
 		$$ = $3
 	}
 
 AvgRowLength:
-	AvgRowLengthKwd OptEq IntLiteral
+	AVG_ROW_LENGTH OptEq IntLiteral
 	{
 		$$ = $3
 	}
 
 Checksum:
-	ChecksumKwd OptEq IntLiteral
+	CHECKSUM OptEq IntLiteral
 	{
 		$$ = $3
 	}
 
 TableComment:
-	CommentKwd OptEq StringLiteral
+	COMMENT OptEq StringLiteral
 	{
 		$$ = $3
 	}
 
 Compression:
-	CompressionKwd OptEq StringLiteral
+	COMPRESSION OptEq StringLiteral
 	{
 		$$ = $3
 	}
 
 Connection:
-	ConnectionKwd OptEq StringLiteral
+	CONNECTION OptEq StringLiteral
 	{
 		$$ = $3
 	}
 
 DataDirectory:
-	DataDirectoryKwd OptEq StringLiteral
+	DATA DIRECTORY OptEq StringLiteral
 	{
-		$$ = $3
+		$$ = $4
 	}
 
 IndexDirectory:
-	IndexDirectoryKwd OptEq StringLiteral
+	INDEX DIRECTORY OptEq StringLiteral
 	{
-		$$ = $3
+		$$ = $4
 	}
 
 DelayKeyWrite:
-	DelayKeyWriteKwd OptEq IntLiteral
+	DELAY_KEY_WRITE OptEq IntLiteral
 	{
 		$$ = $3
 	}
 
 Encryption:
-	EncryptionKwd OptEq StringLiteral
+	ENCRYPTION OptEq StringLiteral
 	{
 		$$ = $3
 	}
 
 Engine:
-	EngineKwd OptEq Identifier
+	ENGINE OptEq Identifier
 	{
 		$$ = $3
 	}
 
 EngineAttribute:
-	EngineAttributeKwd OptEq StringLiteral
+	ENGINE_ATTRIBUTE OptEq StringLiteral
 	{
 		$$ = $3
 	}
 
 InsertMethod:
-	InsertMethodKwd OptEq Identifier
+	INSERT_METHOD OptEq Identifier
 	{
 		$$ = $3
 	}
 
 MaxRows:
-	MaxRowsKwd OptEq IntLiteral
+	MAX_ROWS OptEq IntLiteral
 	{
 		$$ = $3
 	}
 
 MinRows:
-	MinRowsKwd OptEq IntLiteral
+	MIN_ROWS OptEq IntLiteral
 	{
 		$$ = $3
 	}
 
 PackKeys:
-	PackKeysKwd OptEq IntLiteral
+	PACK_KEYS OptEq IntLiteral
 	{
 		$$ = $3
 	}
 
 Password:
-	PasswordKwd OptEq StringLiteral
+	PASSWORD OptEq StringLiteral
 	{
 		$$ = $3
 	}
 
 RowFormat:
-	RowFormatKwd OptEq Identifier
+	ROW_FORMAT OptEq Identifier
 	{
 		$$ = $3
 	}
 
 SecondaryEngineAttribute:
-	SecondaryEngineAttributeKwd OptEq StringLiteral
+	SECONDARY_ENGINE_ATTRIBUTE OptEq StringLiteral
 	{
 		$$ = $3
 	}
 
 StatsAutoRecalc:
-	StatsAutoRecalcKwd OptEq IntLiteral
+	STATS_AUTO_RECALC OptEq IntLiteral
 	{
 		$$ = $3
 	}
 
 StatsPersistent:
-	StatsPersistentKwd OptEq IntLiteral
+	STATS_PERSISTENT OptEq IntLiteral
 	{
 		$$ = $3
 	}
 
 StatsSamplePages:
-	StatsSamplePagesKwd OptEq IntLiteral
+	STATS_SAMPLE_PAGES OptEq IntLiteral
 	{
 		$$ = $3
 	}
 
 TableSpace:
-	TableSpaceKwd Identifier OptStorage
+	TABLESPACE Identifier OptStorage
 	{
 		$$ = []string{$2, $3}
 	}
@@ -1852,16 +2029,225 @@ OptStorage:
 	}
 
 Storage:
-	StorageKwd Identifier
+	STORAGE Identifier
 	{
 		$$ = $2
 	}
 
 TableUnion:
-	UnionKwd OptEq IdentifierList
+	UNION OptEq IdentifierList
 	{
 		$$ = $3
 	}
+
+OptPartitionConfig:
+	{
+		$$ = PartitionConfig{}
+	}
+|	PartitionConfig
+	{
+		$$ = $1
+	}
+
+PartitionConfig:
+	PartitionBy OptPartitions OptSubpartitionBy OptSubpartitions OptPartitionDefinitionList
+	{
+		$$ = PartitionConfig{
+			PartitionBy: $1.(PartitionBy),
+			Partitions: $2,
+			SubpartitionBy: $3.(PartitionBy),
+			Subpartitions: $4,
+			PartitionDefinitions: $5,
+		}
+	}
+
+PartitionBy:
+	PARTITION BY PartitionByHash
+	{
+		$$ = $3
+	}
+|	PARTITION BY PartitionByKey
+	{
+		$$ = $3
+	}
+|	PARTITION BY PartitionByRange
+	{
+		$$ = $3
+	}
+|	PARTITION BY PartitionByList
+	{
+		$$ = $3
+	}
+
+OptPartitions:
+	{
+		$$ = ""
+	}
+|	Partitions
+	{
+		$$ = $1
+	}
+
+Partitions:
+	PARTITIONS IntLiteral
+	{
+		$$ = $2
+	}
+
+OptSubpartitionBy:
+	{
+		$$ = PartitionBy{}
+	}
+|	SubpartitionBy
+	{
+		$$ = $1
+	}
+
+SubpartitionBy:
+	SUBPARTITION BY PartitionByHash
+	{
+		$$ = $3
+	}
+|	SUBPARTITION BY PartitionByKey
+	{
+		$$ = $3
+	}
+
+OptSubpartitions:
+	{
+		$$ = ""
+	}
+|	Subpartitions
+	{
+		$$ = $1
+	}
+
+Subpartitions:
+	SUBPARTITIONS IntLiteral
+	{
+		$$ = $2
+	}
+
+PartitionByHash:
+	OptLinearKwd HASH lp Expression rp
+	{
+		$$ = PartitionBy{
+		  Type: "HASH",
+		  Expression: $4,
+		}
+	}
+
+PartitionByKey:
+	OptLinearKwd KEY OptAlgorithm IdentifierList
+	{
+		$$ = PartitionBy{
+		  Type: "KEY",
+		  Columns: $4,
+		}
+	}
+
+PartitionByRange:
+	RANGE lp Expression rp
+	{
+		$$ = PartitionBy{
+		  Type: "RANGE",
+		  Expression: $3,
+		}
+	}
+|	RANGE COLUMNS IdentifierList
+	{
+		$$ = PartitionBy{
+		  Type: "RANGE",
+		  Columns: $3,
+		}
+	}
+
+PartitionByList:
+	LIST lp Expression rp
+	{
+		$$ = PartitionBy{
+		  Type: "LIST",
+		  Expression: $3,
+		}
+	}
+|	LIST COLUMNS IdentifierList
+	{
+		$$ = PartitionBy{
+		  Type: "LIST COLUMNS",
+		  Columns: $3,
+		}
+	}
+
+OptAlgorithm:
+	{
+		$$ = ""
+	}
+|	Algorithm
+	{
+		$$ = $1
+	}
+
+Algorithm:
+	ALGORITHM OptEq IntLiteral
+	{
+		$$ = $3
+	}
+
+OptPartitionDefinitionList:
+	{
+		$$ = []PartitionDefinition{}
+	}
+| 	PartitionDefinitionList
+	{
+		$$ = $1
+	}
+
+PartitionDefinitionList:
+    lp PartitionDefinitions rp
+    {
+		$$ = $2
+    }
+
+PartitionDefinitions:
+    PartitionDefinition
+    {
+		$$ = []PartitionDefinition{$1.(PartitionDefinition)}
+    }
+|   PartitionDefinitions comma PartitionDefinition
+    {
+		$$ = append($1, $3.(PartitionDefinition))
+    }
+
+PartitionDefinition:
+	PARTITION Identifier PartitionValues PartitionOptions OptSubpartitionDefinitionList
+	{
+		$$ = PartitionDefinition{
+			Name: $2,
+			Operator: $3[0],
+			ValueExpression: $3[1],
+			PartitionOptions: $4.(PartitionOptions),
+			Subpartitions: $5,
+		}
+	}
+
+PartitionValues:
+	VALUES LESS THAN lp Expression rp
+	{
+		$$ = []string{"LESS THAN", $5}
+	}
+|	VALUES LESS THAN lp MAXVALUE rp
+	{
+		$$ = []string{"LESS THAN", "MAXVALUE"}
+	}
+|	VALUES LESS THAN MAXVALUE
+	{
+		$$ = []string{"LESS THAN", "MAXVALUE"}
+	}
+|	VALUES IN lp Expression rp
+	{
+		$$ = []string{"IN", $4}
+	}
+
 PartitionOptions:
 	{
 		$$ = PartitionOptions{}
@@ -1879,173 +2265,93 @@ PartitionOptions:
 	}
 
 PartitionOption:
-	PartitionBy
+	PartitionStorageEngine
 	{
-
+		$$ = PartitionOptions{
+			Engine: $1,
+		}
 	}
-|	Partitions
+|	TableComment
 	{
-
+		$$ = PartitionOptions{
+			Comment: $1,
+		}
 	}
-|	SubpartitionBy
+|	DataDirectory
 	{
-
+		$$ = PartitionOptions{
+			DataDirectory: $1,
+		}
 	}
-|	PartitionDefinitions
+|	IndexDirectory
 	{
-
+		$$ = PartitionOptions{
+			IndexDirectory: $1,
+		}
 	}
-
-
-PartitionBy:
-	PartitionByKwd PartitionByHash
+|	MaxRows
 	{
-
+		$$ = PartitionOptions{
+			MaxRows: $1,
+		}
 	}
-|	PartitionByKwd PartitionByKey
+|	MinRows
 	{
-
+		$$ = PartitionOptions{
+			MinRows: $1,
+		}
 	}
-|	PartitionByKwd PartitionByRange
+|	PartitionTableSpace
 	{
-
-	}
-|	PartitionByKwd PartitionByList
-	{
-
-	}
-
-PartitionByHash:
-	LinearKwdOpt HASH EXPRESSION
-	{
-
-	}
-
-PartitionByKey:
-	LinearKwdOpt KEY Algorithm IdentifierList
-	{
-
+		$$ = PartitionOptions{
+			TableSpace: $1,
+		}
 	}
 
-PartitionByRange:
-	RangeKwd EXPRESSION
+PartitionTableSpace:
+	TABLESPACE OptEq Identifier
 	{
-
-	}
-|	RangeKwd COLUMNS IdentifierList
-	{
-
+		$$ = $3
 	}
 
-PartitionByList:
-	ListKwd EXPRESSION
+PartitionStorageEngine:
+	PartitionStorageEngineKwd Identifier
 	{
-
-	}
-|	ListKwd COLUMNS IdentifierList
-	{
-
+		$$ = $2
 	}
 
-OptAlgorithm:
+OptSubpartitionDefinitionList:
 	{
-
+		$$ = []SubpartitionDefinition{}
 	}
-|	Algorithm
+|	SubpartitionDefinitionList
 	{
-
-	}
-
-Algorithm:
-	AlgorithmKwd OptEq IntLiteral
-	{
-
+		$$ = $1
 	}
 
-LinearKwdOpt:
-	{
-
-	}
-|	LinearKwd
-	{
-
-	}
-
-PartitionsKwd:
-	PARTITIONS
-	{
-		$$ = true
-	}
-
-Partitions:
-	PartitionsKwd IntLiteral
-	{
-
-	}
-
-SubpartitionBy:
-	SubpartitionByKwd PartitionByHash OptSubpartitions
-	{
-
-	}
-|	SubpartitionByKwd PartitionByKey OptSubpartitions
-	{
-
-	}
-
-OptSubpartitions:
-	{
-
-	}
-|	SubpartitionsKwd IntLiteral
-	{
-
-	}
-
-PartitionDefinitions:
-    PartitionDefinition
+SubpartitionDefinitionList:
+    lp SubpartitionDefinitions rp
     {
-		$$ = []interface{}{$1}
-    }
-|   PartitionDefinitions COMMA PartitionDefinition
-    {
-		$$ = append($1.([]interface{}), $3)
+		$$ = $2
     }
 
-PartitionDefinition:
-	PartitionKwd Identifier
-	{
+SubpartitionDefinitions:
+    SubpartitionDefinition
+    {
+		$$ = []SubpartitionDefinition{$1.(SubpartitionDefinition)}
+    }
+|   SubpartitionDefinitions comma SubpartitionDefinition
+    {
+		$$ = append($1, $3.(SubpartitionDefinition))
+    }
 
-	}
-
-ListKwd:
-	LIST
+SubpartitionDefinition:
+	SUBPARTITION Identifier PartitionOptions
 	{
-		$$ = true
-	}
-
-PartitionKwd:
-	PARTITION
-	{
-		$$ = true
-	}
-
-PartitionsKwd:
-	PARTITIONS
-	{
-		$$ = true
-	}
-
-SubpartitionByKwd:
-	SUBPARTITION BY
-	{
-		$$ = true
-	}
-
-SubpartitionsKwd:
-	SUBPARTITIONS
-	{
-		$$ = true
+		$$ = SubpartitionDefinition{
+			Name: $2,
+			PartitionOptions: $3.(PartitionOptions),
+		}
 	}
 
 OptEq:
@@ -2053,16 +2359,78 @@ OptEq:
 	{
 		$$ = false
 	}
-|	EQ
+|	eq
 	{
 		$$ = true
+	}
+
+OptNot:
+	{
+		$$ = ""
+	}
+|	NOT
+	{
+		$$ = "NOT"
+	}
+
+Literal:
+	BooleanLiteral
+	{
+		$$ = $1
+	}
+|	HexLiteral
+	{
+		$$ = $1
+	}
+|	BitLiteral
+	{
+		$$ = $1
+	}
+|	IntLiteral
+	{
+		$$ = $1
+	}
+|	FloatLiteral
+	{
+		$$ = $1
+	}
+|	StringLiteral
+	{
+		$$ = $1
+	}
+|	NULL
+	{
+		$$ = "NULL"
+	}
+
+BooleanLiteral:
+	TRUE
+	{
+		$$ = "TRUE"
+	}
+|	FALSE
+	{
+		$$ = "FALSE"
+	}
+
+HexLiteral:
+	HEX_NUM
+	{
+		$$ = $1.Literal
+	}
+|	HEX_STR
+	{
+		$$ = "0x" + $1.Literal[2:len($1.Literal)-1]
 	}
 
 BitLiteral:
 	BIT_NUM
 	{
-		s := $1.Literal[1:len($1.Literal)-1]
-		$$ = s
+		$$ = $1.Literal
+	}
+|	BIT_STR
+	{
+		$$ = "0b" + $1.Literal[1:len($1.Literal)-1]
 	}
 
 IntLiteral:
@@ -2077,11 +2445,26 @@ FloatLiteral:
 		$$ = $1.Literal
 	}
 
+// cf. https://dev.mysql.com/doc/refman/8.0/en/string-literals.html
 StringLiteral:
-	STRING
+	OptIntroducer STRING OptCollate
 	{
-		s := $1.Literal[1:len($1.Literal)-1]
-		$$ = s
+		$$ = $2.Literal
+	}
+
+OptIntroducer:
+	{
+		$$ = ""
+	}
+|	Introducer
+	{
+		$$ = $1
+	}
+
+Introducer:
+	IDENTIFIER
+	{
+		$$ = $1.Literal
 	}
 
 StringLiterals:
@@ -2089,13 +2472,13 @@ StringLiterals:
 	{
 		$$ = []string{$1}
 	}
-|	StringLiterals COMMA StringLiteral
+|	StringLiterals comma StringLiteral
 	{
 		$$ = append($1, $3)
 	}
 
 StringLiteralList:
-	LP StringLiterals RP
+	lp StringLiterals rp
 	{
 		$$ = $2
 	}
@@ -2115,577 +2498,603 @@ Identifiers:
 	{
 		$$ = []string{$1}
 	}
-|	Identifiers COMMA Identifier
+|	Identifiers comma Identifier
 	{
 		$$ = append($1, $3)
 	}
 
 IdentifierList:
-	LP Identifiers RP
+	lp Identifiers rp
 	{
 		$$ = $2
 	}
 
-Expression:
-	EXPRESSION
+Variable:
+	LOCAL_VAR
+	{
+		$$ = $1.Literal
+	}
+|	GLOBAL_VAR
 	{
 		$$ = $1.Literal
 	}
 
-CreateKwd:
-	CREATE
+ComparisonOp:
+  eq
+  {
+    $$ = $1.Literal
+  }
+| gt
+  {
+    $$ = $1.Literal
+  }
+| gte
+  {
+    $$ = $1.Literal
+  }
+| lt
+  {
+    $$ = $1.Literal
+  }
+| lte
+  {
+    $$ = $1.Literal
+  }
+| ne
+  {
+    $$ = $1.Literal
+  }
+| ne2
+  {
+    $$ = $1.Literal
+  }
+| nseq
+  {
+    $$ = $1.Literal
+  }
+
+
+OptExpressions:
 	{
-		$$ = true
+		$$ = []string{}
+	}
+|	Expressions
+	{
+		$$ = $1
 	}
 
-UseKwd:
- 	USE
- 	{
- 		$$ = true
- 	}
+ExpressionList:
+	lp Expressions rp
+	{
+		$$ = $2
+	}
+
+Expressions:
+	Expression
+	{
+		$$ = []string{$1}
+	}
+|	Expressions comma Expression
+	{
+		$$ = append($1, $3)
+	}
+
+Expression:
+	Expression AndKwd Expression
+	{
+		$$ = fmt.Sprintf("%s AND %s", $1, $3)
+	}
+|	Expression OrKwd Expression
+	{
+		$$ = fmt.Sprintf("%s OR %s", $1, $3)
+	}
+|	Expression XOR Expression
+	{
+		$$ = fmt.Sprintf("%s XOR %s", $1, $3)
+	}
+|	NotKwd Expression
+	{
+		$$ = fmt.Sprintf("NOT %s", $2)
+	}
+|	BooleanPrimaryExpression IS OptNot BooleanLiteral
+	{
+		$$ = compactJoin([]string{$1, "IS", $3, $4}, " ")
+	}
+|	BooleanPrimaryExpression IS OptNot UNKNOWN
+	{
+		$$ = compactJoin([]string{$1, "IS", $3, "UNKNOWN"}, " ")
+	}
+|	BooleanPrimaryExpression
+	{
+		$$ = $1
+	}
+
+AndKwd:
+	AND { $$ = $1.Literal }
+|	and2 { $$ = $1.Literal }
+
+OrKwd:
+	OR { $$ = $1.Literal }
+|	or2 { $$ = $1.Literal }
+
+NotKwd:
+	NOT { $$ = $1.Literal }
+|	excl { $$ = $1.Literal }
+
+DivKwd:
+	DIV { $$ = $1.Literal }
+|	div { $$ = $1.Literal }
+
+ModKwd:
+	MOD { $$ = $1.Literal }
+|	mod { $$ = $1.Literal }
+
+BooleanPrimaryExpression:
+	BooleanPrimaryExpression IS OptNot NULL
+	{
+		$$ = compactJoin([]string{$1, $2.Literal, $3, $4.Literal}, " ")
+	}
+|	BooleanPrimaryExpression ComparisonOp PredicateExpression
+	{
+		$$ = compactJoin([]string{$1, $2, $3}, " ")
+	}
+|	PredicateExpression
+	{
+		$$ = $1
+	}
+
+PredicateExpression:
+//	BitExpression OptNot IN rp Subquery lp
+//	{
+//		$$ = compactJoin([]string{$1, $2, "IN", "(", $5, ")")}, " ")
+//	}
+	BitExpression OptNot IN ExpressionList
+	{
+		expressions := fmt.Sprintf("(%s)", strings.Join($4, ", "))
+		$$ = compactJoin([]string{$1, $2, "IN", expressions}, " ")
+	}
+|	BitExpression OptNot BETWEEN BitExpression AND PredicateExpression
+	{
+		$$ = compactJoin([]string{$1, $2, "BETWEEN", $4, "AND", $6}, " ")
+	}
+| 	BitExpression SOUNDS LIKE BitExpression
+	{
+		$$ = compactJoin([]string{$1, "SOUNDS", "LIKE", $4}, " ")
+	}
+| 	BitExpression OptNot LIKE SimpleExpression
+	{
+		$$ = compactJoin([]string{$1, $2, "LIKE", $4}, " ")
+	}
+| 	BitExpression OptNot REGEXP BitExpression
+	{
+		$$ = compactJoin([]string{$1, $2, "REGEXP", $4}, " ")
+	}
+|	BitExpression
+	{
+		$$ = $1
+	}
+
+BitExpression:
+	BitExpression or BitExpression
+	{
+		$$ = fmt.Sprintf("%s | %s", $1, $3)
+	}
+| 	BitExpression and BitExpression
+	{
+		$$ = fmt.Sprintf("%s & %s", $1, $3)
+	}
+| 	BitExpression rshift BitExpression
+	{
+		$$ = fmt.Sprintf("%s << %s", $1, $3)
+	}
+| 	BitExpression lshift BitExpression
+	{
+		$$ = fmt.Sprintf("%s >> %s", $1, $3)
+	}
+| 	BitExpression plus BitExpression
+	{
+		$$ = fmt.Sprintf("%s + %s", $1, $3)
+	}
+| 	BitExpression minus BitExpression
+	{
+		$$ = fmt.Sprintf("%s - %s", $1, $3)
+	}
+| 	BitExpression mult BitExpression
+	{
+		$$ = fmt.Sprintf("%s * %s", $1, $3)
+	}
+| 	BitExpression DivKwd BitExpression
+	{
+		$$ = fmt.Sprintf("%s / %s", $1, $3)
+	}
+| 	BitExpression ModKwd BitExpression
+	{
+		$$ = fmt.Sprintf("%s %% %s", $1, $3)
+	}
+| 	BitExpression hat BitExpression
+	{
+		$$ = fmt.Sprintf("%s ^ %s", $1, $3)
+	}
+| 	BitExpression plus IntervalExpression
+	{
+		$$ = fmt.Sprintf("%s + %s", $1, $3)
+	}
+| 	BitExpression minus IntervalExpression
+	{
+		$$ = fmt.Sprintf("%s - %s", $1, $3)
+	}
+|	SimpleExpression
+	{
+		$$ = $1
+	}
+
+
+SimpleExpression:
+	Literal
+	{
+		$$ = $1
+	}
+|	Identifier
+	{
+		$$ = fmt.Sprintf("`%s`", $1)
+	}
+//|	SimpleExpression ComparisonOp SimpleExpression
+//	{
+//		$$ = $1 + $2 + $3
+//	}
+|	FunctionCall
+	{
+		$$ = $1
+	}
+|	SimpleExpression COLLATE Identifier
+	{
+		$$ = fmt.Sprintf("%s COLLATE %s", $1, $3)
+	}
+| 	qstn
+	{
+		$$ = "?"
+	}
+| 	Variable
+	{
+		$$ = $1
+	}
+|	plus SimpleExpression
+	{
+		$$ = fmt.Sprintf("+ %s", $2)
+	}
+|	minus SimpleExpression
+	{
+		$$ = fmt.Sprintf("- %s", $2)
+	}
+|	tilde SimpleExpression
+	{
+		$$ = fmt.Sprintf("~ %s", $2)
+	}
+|	excl SimpleExpression
+	{
+		$$ = fmt.Sprintf("! %s", $2)
+	}
+|	BINARY SimpleExpression
+	{
+		$$ = fmt.Sprintf("BINARY %s", $2)
+	}
+|	ExpressionList
+	{
+		$$ = fmt.Sprintf("(%s)", strings.Join($1, ", "))
+	}
+|	ROW ExpressionList
+	{
+		expressions := fmt.Sprintf("(%s)", strings.Join($2, ", "))
+		$$ = fmt.Sprintf("ROW %s", expressions)
+	}
+//|	rp Subquery lp
+//	{
+//
+//	}
+//|	EXISTS rp Subquery lp
+//	{
+//
+//	}
+|	lcb Identifier Expression rcb
+	{
+		ident := fmt.Sprintf("`%s`", $2)
+		$$ = fmt.Sprintf("{%s %s}", ident, $3)
+	}
+|	MatchExpression
+	{
+		$$ = $1
+	}
+|	CaseExpression
+	{
+		$$ = $1
+	}
+|	IntervalExpression
+	{
+		$$ = $1
+	}
+
+MatchExpression:
+	MATCH IdentifierList AGAINST lp BitExpression OptSearchModifier rp
+	{
+		idents := fmt.Sprintf("(%s)", JoinS($2, ", ", "`"))
+		against := fmt.Sprintf("(%s)", compactJoin([]string{$5, $6}, " "))
+		$$ = compactJoin([]string{"MATCH", idents, "AGAINST", against}, " ")
+	}
+
+OptSearchModifier:
+	{
+		$$ = ""
+	}
+|	SearchModifier
+	{
+		$$ = $1
+	}
+
+SearchModifier:
+	IN NATURAL LANGUAGE MODE
+	{
+		$$ = "IN NATURAL LANGUAGE MODE"
+	}
+|	IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION
+	{
+		$$ = "IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION"
+	}
+|	IN BOOLEAN MODE
+	{
+		$$ = "IN BOOLEAN MODE"
+	}
+|	WITH QUERY EXPANSION
+	{
+		$$ = "WITH QUERY EXPANSION"
+	}
+
+CaseExpression:
+	CASE Expression WhenClauses OptElseClause END
+	{
+		$$ = compactJoin([]string{"CASE", $2, $3, $4, "END"}, " ")
+	}
+
+WhenClauses:
+	WhenClause
+	{
+		$$ = $1
+	}
+|	WhenClauses WhenClause
+	{
+		$$ = fmt.Sprintf("%s %s", $1, $2)
+	}
+
+OptElseClause:
+	{
+		$$ = ""
+	}
+|	ElseClause
+	{
+		$$ = $1
+	}
+
+ElseClause:
+	ELSE Expression
+	{
+		$$ = fmt.Sprintf("ELSE %s", $2)
+	}
+
+WhenClause:
+	WHEN Expression THEN Expression
+	{
+		$$ = fmt.Sprintf("WHEN %s THEN %s", $2, $4)
+	}
+
+IntervalExpression:
+	INTERVAL Expression TimeUnit
+	{
+		$$ = compactJoin([]string{"INTERVAL", $2, $3}, " ")
+	}
+
+TimeUnit:
+	MICROSECOND { $$ = "MICROSECOND" }
+|	SECOND	 { $$ = "SECOND" }
+|	MINUTE	 { $$ = "MINUTE" }
+|	HOUR	 { $$ = "HOUR" }
+|	DAY	 { $$ = "DAY" }
+|	WEEK	 { $$ = "WEEK" }
+|	MONTH	 { $$ = "MONTH" }
+|	QUARTER	 { $$ = "QUARTER" }
+|	YEAR	 { $$ = "YEAR" }
+|	SECOND_MICROSECOND	 { $$ = "SECOND_MICROSECOND" }
+|	MINUTE_MICROSECOND	 { $$ = "MINUTE_MICROSECOND" }
+|	MINUTE_SECOND	 { $$ = "MINUTE_SECOND" }
+|	HOUR_MICROSECOND	 { $$ = "HOUR_MICROSECOND" }
+|	HOUR_SECOND	 { $$ = "HOUR_SECOND" }
+|	HOUR_MINUTE	 { $$ = "HOUR_MINUTE" }
+|	DAY_MICROSECOND	 { $$ = "DAY_MICROSECOND" }
+|	DAY_SECOND	 { $$ = "DAY_SECOND" }
+|	DAY_MINUTE	 { $$ = "DAY_MINUTE" }
+|	DAY_HOUR	 { $$ = "DAY_HOUR" }
+|	YEAR_MONTH	 { $$ = "YEAR_MONTH" }
+
+
+FunctionCall:
+	FunctionCallGeneric
+	{
+		$$ = $1
+	}
+|	FunctionCallKeyword
+	{
+		$$ = $1
+	}
+
+FunctionCallKeyword:
+	FunctionNameConflict lp OptExpressions rp
+	{
+		$$ = fmt.Sprintf("%s(%s)", $1, strings.Join($3, ","))
+	}
+|	FunctionNameOptionalBraces OptBraces
+	{
+		$$ = $1
+	}
+|	FunctionNameDatetimePrecision OptFieldLen
+	{
+		$$ = compactJoin([]string{$1, $2}, "")
+	}
+
+OptBraces:
+	{ $$ = "" }
+|	lp rp { $$ = "()" }
+
+FunctionNameConflict:
+	CHARSET { $$ = "chaeset" }
+|	DATE { $$ = "date" }
+|	DATABASE { $$ = "database" }
+|	DEFAULT { $$ = "default" }
+|	YEAR { $$ = "year" }
+|	MONTH { $$ = "month" }
+|	WEEK { $$ = "week" }
+|	DAY { $$ = "day" }
+|	HOUR { $$ = "hour" }
+|	MINUTE { $$ = "minute" }
+|	SECOND { $$ = "second" }
+|	MICROSECOND { $$ = "microsecond" }
+|	IF { $$ = "if" }
+|	INTERVAL { $$ = "interval" }
+|	TIME { $$ = "time" }
+|	TIMESTAMP { $$ = "timestamp" }
+
+FunctionNameOptionalBraces:
+	CURRENT_USER { $$ = "CURRENT_UESR" }
+|	CURRENT_DATE { $$ = "CURRENT_DATE" }
+|	CURRENT_ROLE { $$ = "CURRENT_ROLE" }
+|	UTC_DATE { $$ = "UTC_DATE" }
+
+FunctionNameDatetimePrecision:
+	CURRENT_TIME { $$ = "CURRENT_TIME" }
+|   CURRENT_TIMESTAMP { $$ = "CURRENT_TIMESTAMP" }
+|   LOCALTIME { $$ = "LOCALTIME" }
+|   LOCALTIMESTAMP { $$ = "LOCALTIMESTAMP" }
+|   UTC_TIME { $$ = "UTC_TIME" }
+|   UTC_TIMESTAMP { $$ = "UTC_TIMESTAMP" }
+
+FunctionCallGeneric:
+	Identifier lp OptExpressions rp
+	{
+		$$ = fmt.Sprintf("%s(%s)", strings.ToLower($1), strings.Join($3, ","))
+	}
 
 OptTemporaryKwd:
-	{
-		$$ = false
-	}
-|   TemporaryKwd
-    {
-      	$$ = true
-    }
-
-TemporaryKwd:
-	TEMPORARY
-	{
-		$$ = true
-	}
+	{ $$ = false }
+|   TEMPORARY
+    { $$ = true }
 
 DatabaseKwd:
 	DATABASE
-	{
-		$$ = true
-	}
+	{ $$ = true }
 |	SCHEMA
-	{
-		$$ = true
-	}
-
-TableKwd:
-	TABLE
-	{
-		$$ = true
-	}
+	{ $$ = true }
 
 OptIfNotExistsKwd:
-	{
-		$$ = false
-	}
-|	IF_NOT_EXISTS
-    {
-      	$$ = true
-    }
-
-IfNotExistsKwd:
-	IF_NOT_EXISTS
-	{
-		$$ = true
-	}
+	{ $$ = false }
+|	IF NOT EXISTS
+    { $$ = true }
 
 OptDefaultKwd:
-	{
- 		$$ = true
-	}
-|	DefaultKwd
-	{
-		$$ = false
-	}
-
-DefaultKwd:
-	DEFAULT
-	{
-		$$ = true
-	}
+	{ $$ = true }
+|	DEFAULT
+	{ $$ = false }
 
 CharsetKwd:
 	CHARACTER SET
-	{
-		$$ = true
-	}
+	{ $$ = true }
 |	CHARSET
-	{
-		$$ = true
-	}
-
-CollateKwd:
-	COLLATE
-	{
-		$$ = true
-	}
-
-EncryptionKwd:
-	ENCRYPTION
-	{
-		$$ = true
-	}
-
-BitKwd:
-	BIT
-	{
-		$$ = true
-	}
-
-TinyIntKwd:
-	TINYINT
-	{
-		$$ = true
-	}
+	{ $$ = true }
 
 BoolKwd:
 	BOOL
-	{
-		$$ = true
-	}
+	{ $$ = true }
 |	BOOLEAN
-	{
-		$$ = true
-	}
-
-SmallIntKwd:
-	SMALLINT
-	{
-		$$ = true
-	}
-
-MediumIntKwd:
-	MEDIUMINT
-	{
-		$$ = true
-	}
+	{ $$ = true }
 
 IntKwd:
 	INT
-	{
-		$$ = true
-	}
+	{ $$ = true }
 |	INTEGER
-	{
-		$$ = true
-	}
-
-BigIntKwd:
-	BIGINT
-	{
-		$$ = true
-	}
+	{ $$ = true }
 
 DecimalKwd:
 	DECIMAL
-	{
-		$$ = true
-	}
+	{ $$ = true }
 |	DEC
-	{
-		$$ = true
-	}
+	{ $$ = true }
 |	FIXED
-	{
-		$$ = true
-	}
-
-FloatKwd:
-	FLOAT
-	{
-		$$ = true
-	}
+	{ $$ = true }
 
 DoubleKwd:
 	DOUBLE
-	{
-		$$ = true
-	}
+	{ $$ = true }
 |	REAL
-	{
-		$$ = true
-	}
+	{ $$ = true }
 
 CharKwd:
 	CHAR
-	{
-		$$ = true
-	}
+	{ $$ = true }
 |	CHARACTER
-	{
-		$$ = true
-	}
+	{ $$ = true }
 
-VarcharKwd:
-	VARCHAR
-	{
-		$$ = true
-	}
-
-BinaryKwd:
-	BINARY
-	{
-		$$ = true
-	}
-
-VarBinaryKwd:
-	VARBINARY
-	{
-		$$ = true
-	}
-
-TinyBlobKwd:
-	TINYBLOB
-	{
-		$$ = true
-	}
-
-TinyTextKwd:
-	TINYTEXT
-	{
-		$$ = true
-	}
-
-BlobKwd:
-	BLOB
-	{
-		$$ = true
-	}
-
-TextKwd:
-	TEXT
-	{
-		$$ = true
-	}
-
-MediumBlobKwd:
-	MEDIUMBLOB
-	{
-		$$ = true
-	}
-
-MediumTextKwd:
-	MEDIUMTEXT
-	{
-		$$ = true
-	}
-
-LongBlobKwd:
-	LONGBLOB
-	{
-		$$ = true
-	}
-
-LongTextKwd:
-	LONGTEXT
-	{
-		$$ = true
-	}
-
-EnumKwd:
-	ENUM
-	{
-		$$ = true
-	}
-
-SetKwd:
-	SET
-	{
-		$$ = true
-	}
 
 OptUnsignedKwd:
-	{
-		$$ = false
-	}
-|	UnsignedKwd
-	{
-		$$ = true
-	}
-
-UnsignedKwd:
-	UNSIGNED
-	{
-		$$ = true
-	}
-
-ZerofillKwd:
-	ZEROFILL
-	{
-		$$ = true
-	}
+	{ $$ = false }
+|	UNSIGNED
+	{ $$ = true }
 
 OptZerofillKwd:
-	{
-		$$ = false
-	}
-|	ZerofillKwd
-	{
-		$$ = true
-	}
-
-OptAutoIncrementKwd:
-	{
-		$$ = false
-	}
-|	AutoIncrementKwd
-	{
-		$$ = true
-	}
+	{ $$ = false }
+|	ZEROFILL
+	{ $$ = true }
 
 ColumnUniqueKwd:
 	UNIQUE
-	{
-		$$ = true
-	}
+	{ $$ = true }
 |	UNIQUE KEY
-	{
-		$$ = true
-	}
+	{ $$ = true }
 
 ColumnPrimaryKwd:
 	KEY
-	{
-
-	}
+	{ $$ = true }
 |	PRIMARY KEY
-	{
-		$$ = true
-	}
+	{ $$ = true }
+
+GeneratedAlwaysAsKwd:
+	GENERATED ALWAYS AS
+	{ $$ = true }
+|	AS
+	{ $$ = true }
 
 IndexKwd:
 	INDEX
-	{
-		$$ = true
-	}
+	{ $$ = true }
 | 	KEY
-	{
-		$$ = true
-	}
+	{ $$ = true }
 
 FullTextIndexKwd:
 	FULLTEXT INDEX
-	{
-		$$ = true
-	}
+	{ $$ = true }
 | 	FULLTEXT KEY
-	{
-		$$ = true
-	}
+	{ $$ = true }
 
 UniqueKeyKwd:
 	UNIQUE KEY
-	{
-		$$ = true
-	}
+	{ $$ = true }
 |	UNIQUE INDEX
-	{
-		$$ = true
-	}
+	{ $$ = true }
 
-PrimaryKeyKwd:
-	PRIMARY KEY
-	{
-		$$ = true
-	}
+OptLinearKwd:
+	{ $$ = false }
+|	LINEAR
+	{ $$ = true }
 
-KeyBlockSizeKwd:
-	KEY_BLOCK_SIZE
-	{
-		$$ = true
-	}
-
-UsingKwd:
-	USING
-	{
-		$$ = true
-	}
-
-WithParserKwd:
-	WITH PARSER
-	{
-		$$ = true
-	}
-
-CommentKwd:
-	COMMENT
-	{
-		$$ = true
-	}
-
-ForeignKeyKwd:
-	FOREIGN KEY
-	{
-		$$ = true
-	}
-
-AutoExtendedSizeKwd:
-	AUTOEXTENDED_SIZE
-	{
-		$$ = true
-	}
-
-AutoIncrementKwd:
-	AUTO_INCREMENT
-	{
-		$$ = true
-	}
-
-AvgRowLengthKwd:
-	AVG_ROW_LENGTH
-	{
-		$$ = true
-	}
-
-ChecksumKwd:
-	CHECKSUM
-	{
-		$$ = true
-	}
-
-CompressionKwd:
-	COMPRESSION
-	{
-		$$ = true
-	}
-
-ConnectionKwd:
-	CONNECTION
-	{
-		$$ = true
-	}
-
-DelayKeyWriteKwd:
-	DELAY_KEY_WRITE
-	{
-		$$ = true
-	}
-
-DataDirectoryKwd:
-	DATA DIRECTORY
-	{
-		$$ = true
-	}
-
-EngineKwd:
-	ENGINE
-	{
-		$$ = true
-	}
-
-EngineAttributeKwd:
-	ENGINE_ATTRIBUTE
-	{
-		$$ = true
-	}
-
-IndexDirectoryKwd:
-	INDEX DIRECTORY
-	{
-		$$ = true
-	}
-
-InsertMethodKwd:
-	INSERT_METHOD
-	{
-		$$ = true
-	}
-
-MaxRowsKwd:
-	MAX_ROWS
-	{
-		$$ = true
-	}
-
-MinRowsKwd:
-	MIN_ROWS
-	{
-		$$ = true
-	}
-
-PackKeysKwd:
-	PACK_KEYS
-	{
-		$$ = true
-	}
-
-PasswordKwd:
-	PASSWORD
-	{
-		$$ = true
-	}
-
-RowFormatKwd:
-	ROW_FORMAT
-	{
-		$$ = true
-	}
-
-SecondaryEngineAttributeKwd:
-	SECONDARY_ENGINE_ATTRIBUTE
-	{
-		$$ = true
-	}
-
-StatsAutoRecalcKwd:
-	STATS_AUTO_RECALC
-	{
-		$$ = true
-	}
-
-StatsPersistentKwd:
-	STATS_PERSISTENT
-	{
-		$$ = true
-	}
-
-StatsSamplePagesKwd:
-	STATS_SAMPLE_PAGES
-	{
-		$$ = true
-	}
-
-TableSpaceKwd:
-	TABLESPACE
-	{
-		$$ = true
-	}
-
-StorageKwd:
-	STORAGE
-	{
-		$$ = true
-	}
-
-UnionKwd:
-	UNION
-	{
-		$$ = true
-	}
-
-PartitionByKwd:
-	PARTITION BY
-	{
-		$$ = true
-	}
-
-AlgorithmKwd:
-	ALGORITHM
-	{
-		$$ = true
-	}
-
-RangeKwd:
-	RANGE
-	{
-		$$ = true
-	}
-
-LinearKwd:
-	LINEAR
-	{
-		$$ = true
-	}
+PartitionStorageEngineKwd:
+	STORAGE ENGINE
+	{ $$ = true }
+|	ENGINE
+	{ $$ = true }
 
 %%

@@ -9,13 +9,14 @@ import (
 const MaxInt = int(^uint(0) >> 1)
 
 type Lexer struct {
-	reader            io.Reader
-	buf               string
-	loadedLine        string
-	nextPos           Position
-	TokenTypes        []TokenType
-	SkippedTokenTypes []TokenType
-	LastToken         TokenType
+	reader                io.Reader
+	buf                   string
+	loadedLine            string
+	nextPos               Position
+	TokenTypes            []TokenType
+	SkippedTokenTypes     []TokenType
+	SyntaxAwareTokenTypes []*SyntaxAwareTokenType
+	prevTokens            []*Token
 }
 
 func NewLexer(reader io.Reader, tokenTypes []TokenType, skippedTokenTypes []TokenType) *Lexer {
@@ -24,6 +25,96 @@ func NewLexer(reader io.Reader, tokenTypes []TokenType, skippedTokenTypes []Toke
 		TokenTypes:        tokenTypes,
 		SkippedTokenTypes: skippedTokenTypes,
 	}
+}
+
+func (l *Lexer) Scan() (*Token, error) {
+	t, e := l.Peek()
+	l.consumeBuffer(t)
+	return t, e
+}
+
+func (l *Lexer) Peek() (*Token, error) {
+
+	// Ensure sorted by priority
+	sort.SliceStable(l.TokenTypes, func(i, j int) bool {
+		return l.TokenTypes[i].GetPriority() < l.TokenTypes[j].GetPriority()
+	})
+	sort.SliceStable(l.SyntaxAwareTokenTypes, func(i, j int) bool {
+		return l.TokenTypes[i].GetPriority() < l.TokenTypes[j].GetPriority()
+	})
+
+	// Find all matching tokens
+	curPriority := MaxInt
+	var found []*Token
+	for _, tokenType := range l.TokenTypes {
+		// Check priority.
+		// If once found, all tokens with lower priority (higher value) are skipped
+		if curPriority < tokenType.GetPriority() {
+			continue
+		}
+		l.skipTokens()
+		l.readBufIfNeed()
+		if t := tokenType.FindToken(l.buf, l.nextPos); t != nil {
+			found = append(found, t)
+			curPriority = tokenType.GetPriority()
+		}
+	}
+
+	for _, tokenType := range l.SyntaxAwareTokenTypes {
+		if !tokenType.Enabled {
+			continue
+		}
+		// Check priority.
+		// If once found, all tokens with lower priority (higher value) are skipped
+		if curPriority < tokenType.GetPriority() {
+			continue
+		}
+		l.skipTokens()
+		l.readBufIfNeed()
+		if t := tokenType.tokenType.FindToken(l.buf, l.nextPos); t != nil {
+			found = append(found, t)
+		}
+	}
+
+	if len(found) == 0 {
+		if len(l.buf) > 0 {
+			return nil, l.makeError()
+		} else {
+			return nil, nil
+		}
+	}
+
+	for _, tokenType := range l.TokenTypes {
+		l.skipTokens()
+		l.readBufIfNeed()
+		if t := tokenType.FindToken(l.buf, l.nextPos); t != nil {
+			found = append(found, t)
+		}
+	}
+
+	if len(found) == 0 {
+		if len(l.buf) > 0 {
+			return nil, l.makeError()
+		} else {
+			return nil, nil
+		}
+	}
+
+	// Select the longest of the matched tokens
+	maxIdx := 0
+	maxLen := len(found[0].Literal)
+	for i, t := range found {
+		curLen := len(t.Literal)
+		if maxLen < curLen {
+			maxIdx = i
+			maxLen = curLen
+		}
+	}
+
+	//fmt.Fprintf(os.Stderr, "Token = %s, %d\n", found[maxIdx].Literal, found[maxIdx].Type.GetID())
+
+	l.prevTokens = append(l.prevTokens, found[maxIdx])
+	return found[maxIdx], nil
 }
 
 func (l *Lexer) readBufIfNeed() {
@@ -68,91 +159,10 @@ func (l *Lexer) skipTokens() {
 }
 
 func (l *Lexer) makeError() error {
-	//for shift, _ := range l.buf {
-	//	if l.SkippedTokenTypes != nil && l.SkippedTokenTypes.FindToken(l.buf[shift:], l.nextPos) != nil {
-	//		return UnknownTokenError{
-	//			Literal:  l.buf[:shift],
-	//			Position: l.nextPos,
-	//		}
-	//	}
-	//
-	//	for _, tokenType := range l.TokenTypes {
-	//		if tokenType.FindToken(l.buf[shift:], l.nextPos) != nil {
-	//			return UnknownTokenError{
-	//				Literal:  l.buf[:shift],
-	//				Position: l.nextPos,
-	//			}
-	//		}
-	//	}
-	//}
-
 	return UnknownTokenError{
 		Literal:  l.buf,
 		Position: l.nextPos,
 	}
-}
-
-func (l *Lexer) Peek() (*Token, error) {
-	// Ensure sorted by priority
-	sort.SliceStable(l.TokenTypes, func(i, j int) bool {
-		return l.TokenTypes[i].GetPriority() < l.TokenTypes[j].GetPriority()
-	})
-
-	curPriority := MaxInt
-	var found []*Token
-	for _, tokenType := range l.TokenTypes {
-		// Check priority.
-		// If once found, all tokens with lower priority (higher value) are skipped
-		if curPriority < tokenType.GetPriority() {
-			continue
-		}
-		// Check previous token constraints
-		if prevTokenId := tokenType.GetPreviousTokenID(); prevTokenId > 0 && l.LastToken != nil && prevTokenId != l.LastToken.GetID() {
-			continue
-		}
-		l.skipTokens()
-		l.readBufIfNeed()
-		if t := tokenType.FindToken(l.buf, l.nextPos); t != nil {
-			found = append(found, t)
-			curPriority = tokenType.GetPriority()
-		}
-	}
-
-	if len(found) == 0 {
-		if len(l.buf) > 0 {
-			return nil, l.makeError()
-		} else {
-			return nil, nil
-		}
-	}
-
-	maxIdx := 0
-	maxLen := len(found[0].Literal)
-	for i, t := range found {
-		curLen := len(t.Literal)
-		if maxLen < curLen {
-			maxIdx = i
-			maxLen = curLen
-		}
-	}
-
-	//fmt.Fprintf(os.Stderr, "Token = %s, %d\n", found[maxIdx].Literal, found[maxIdx].Type.GetID())
-
-	l.LastToken = found[maxIdx].Type
-	return found[maxIdx], nil
-}
-
-/*
-Scan will get the first token in the buffer and remove it from the buffer.
-
-This function using Lexer.Peek. Please read document of Peek.
-*/
-func (l *Lexer) Scan() (*Token, error) {
-	t, e := l.Peek()
-
-	l.consumeBuffer(t)
-
-	return t, e
 }
 
 func (l *Lexer) GetLastLine() string {

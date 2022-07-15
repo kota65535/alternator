@@ -16,7 +16,6 @@ func (id TokenID) String() string {
 type TokenType interface {
 	GetID() TokenID
 	FindToken(string, Position) *Token
-	GetPreviousTokenID() TokenID
 	GetPriority() int
 }
 
@@ -28,13 +27,12 @@ type SimpleTokenType struct {
 	PreviousTokenID TokenID
 }
 
-func NewSimpleTokenType(id TokenID, pattern string, ignoreCase bool, priority int, previousTokenId TokenID) *SimpleTokenType {
+func NewSimpleTokenType(id TokenID, pattern string, ignoreCase bool, priority int) *SimpleTokenType {
 	return &SimpleTokenType{
-		ID:              id,
-		Pattern:         pattern,
-		IgnoreCase:      ignoreCase,
-		Priority:        priority,
-		PreviousTokenID: previousTokenId,
+		ID:         id,
+		Pattern:    pattern,
+		IgnoreCase: ignoreCase,
+		Priority:   priority,
 	}
 }
 
@@ -61,77 +59,7 @@ func (ptt *SimpleTokenType) FindToken(s string, p Position) *Token {
 	}
 }
 
-func (ptt *SimpleTokenType) GetPreviousTokenID() TokenID {
-	return ptt.PreviousTokenID
-}
-
 func (ptt *SimpleTokenType) GetPriority() int {
-	return ptt.Priority
-}
-
-type MultiTokenType struct {
-	ID              TokenID
-	Patterns        []string
-	IgnoreCase      bool
-	Priority        int
-	PreviousTokenID TokenID
-}
-
-func NewMultiTokenType(id TokenID, patterns []string, ignoreCase bool, priority int, previousTokenId TokenID) *MultiTokenType {
-	return &MultiTokenType{
-		ID:              id,
-		Patterns:        patterns,
-		IgnoreCase:      ignoreCase,
-		Priority:        priority,
-		PreviousTokenID: previousTokenId,
-	}
-}
-
-func (ptt *MultiTokenType) String() string {
-	return ptt.ID.String()
-}
-
-func (ptt *MultiTokenType) GetID() TokenID {
-	return ptt.ID
-}
-
-func (ptt *MultiTokenType) FindToken(s string, p Position) *Token {
-	var found []string
-	if ptt.IgnoreCase {
-		s = strings.ToUpper(s)
-	}
-	for _, x := range ptt.Patterns {
-		if strings.HasPrefix(s, x) {
-			found = append(found, x)
-		}
-	}
-
-	if len(found) == 0 {
-		return nil
-	}
-
-	// Use longest pattern
-	maxIdx := 0
-	maxLen := len(found[0])
-	for i, s := range found {
-		if len(s) > maxLen {
-			maxIdx = i
-			maxLen = len(s)
-		}
-	}
-
-	return &Token{
-		Type:     ptt,
-		Literal:  found[maxIdx],
-		Position: p,
-	}
-}
-
-func (ptt *MultiTokenType) GetPreviousTokenID() TokenID {
-	return ptt.PreviousTokenID
-}
-
-func (ptt *MultiTokenType) GetPriority() int {
 	return ptt.Priority
 }
 
@@ -143,16 +71,15 @@ type RegexpTokenType struct {
 	PreviousTokenID TokenID
 }
 
-func NewRegexpTokenType(id TokenID, re string, ignoreCase bool, priority int, previousTokenId TokenID) *RegexpTokenType {
+func NewRegexpTokenType(id TokenID, re string, ignoreCase bool, priority int) *RegexpTokenType {
 	if !strings.HasPrefix(re, "^") {
 		re = "^(?:" + re + ")"
 	}
 	return &RegexpTokenType{
-		ID:              id,
-		Re:              regexp.MustCompile(re),
-		IgnoreCase:      ignoreCase,
-		Priority:        priority,
-		PreviousTokenID: previousTokenId,
+		ID:         id,
+		Re:         regexp.MustCompile(re),
+		IgnoreCase: ignoreCase,
+		Priority:   priority,
 	}
 }
 
@@ -191,25 +118,23 @@ func (rtt *RegexpTokenType) GetPriority() int {
 // BalancedParenthesesTokenType implementation
 
 type BalancedParenthesesTokenType struct {
-	ID              TokenID
-	Re              *regexp.Regexp
-	Parentheses     []rune
-	IgnoreCase      bool
-	Priority        int
-	PreviousTokenID TokenID
+	ID          TokenID
+	Re          *regexp.Regexp
+	Parentheses []rune
+	IgnoreCase  bool
+	Priority    int
 }
 
-func NewBalancedParenthesesTokenType(id TokenID, re string, open rune, close rune, ignoreCase bool, priority int, previousTokenId TokenID) *BalancedParenthesesTokenType {
+func NewBalancedParenthesesTokenType(id TokenID, re string, open rune, close rune, ignoreCase bool, priority int) *BalancedParenthesesTokenType {
 	if !strings.HasPrefix(re, "^") {
 		re = "^(?:" + re + ")"
 	}
 	return &BalancedParenthesesTokenType{
-		ID:              id,
-		Re:              regexp.MustCompile(re),
-		Parentheses:     []rune{open, close},
-		IgnoreCase:      ignoreCase,
-		Priority:        priority,
-		PreviousTokenID: previousTokenId,
+		ID:          id,
+		Re:          regexp.MustCompile(re),
+		Parentheses: []rune{open, close},
+		IgnoreCase:  ignoreCase,
+		Priority:    priority,
 	}
 }
 
@@ -267,12 +192,27 @@ func (btt *BalancedParenthesesTokenType) FindToken(s string, p Position) *Token 
 	}
 }
 
-func (btt *BalancedParenthesesTokenType) GetPreviousTokenID() TokenID {
-	return btt.PreviousTokenID
-}
-
 func (btt *BalancedParenthesesTokenType) GetPriority() int {
 	return btt.Priority
+}
+
+type SyntaxAwareTokenType struct {
+	startPattern []TokenID
+	endPattern   []TokenID
+	tokenType    TokenType
+	Enabled      bool
+}
+
+func NewSyntaxAwareTokenType(startPattern []TokenID, endPattern []TokenID, tokenType TokenType) *SyntaxAwareTokenType {
+	return &SyntaxAwareTokenType{
+		startPattern: startPattern,
+		endPattern:   endPattern,
+		tokenType:    tokenType,
+	}
+}
+
+func (btt *SyntaxAwareTokenType) GetPriority() int {
+	return btt.tokenType.GetPriority()
 }
 
 type Token struct {

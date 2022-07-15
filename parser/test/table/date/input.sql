@@ -1,7 +1,7 @@
 create table t1
 (
     date1      date,
-    date2      DATE         NOT NULL,
+    date2      DATE         NOT NULL DEFAULT (CURRENT_DATE + INTERVAL 1 YEAR),
     datetime1  datetime,
     datetime2  DATETIME(1)  NOT NULL,
     timestamp1 timestamp,
@@ -11,4 +11,3 @@ create table t1
     year1      year,
     year2      YEAR(4)      NOT NULL
 );
-

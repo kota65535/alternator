@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 	"github.com/emirpasic/gods/maps/linkedhashmap"
+	"reflect"
 	"strings"
 )
 
@@ -25,7 +26,7 @@ func (r DatabaseOptions) Map() *linkedhashmap.Map {
 		ret.Put("DEFAULT COLLATE", r.DefaultCollate)
 	}
 	if r.DefaultEncryption != "" {
-		ret.Put("DEFAULT ENCRYPTION", fmt.Sprintf("'%s'", r.DefaultEncryption))
+		ret.Put("DEFAULT ENCRYPTION", r.DefaultEncryption)
 	}
 	return ret
 }
@@ -48,6 +49,20 @@ type ColumnDefinition struct {
 	ColumnOptions ColumnOptions
 }
 
+func (r ColumnDefinition) Equals(a ColumnDefinition) bool {
+	r.ColumnOptions.GeneratedAs = strings.ReplaceAll(r.ColumnOptions.GeneratedAs, "`", "")
+	r.ColumnOptions.GeneratedAs = strings.ReplaceAll(r.ColumnOptions.GeneratedAs, " ", "")
+	a.ColumnOptions.GeneratedAs = strings.ReplaceAll(a.ColumnOptions.GeneratedAs, "`", "")
+	a.ColumnOptions.GeneratedAs = strings.ReplaceAll(a.ColumnOptions.GeneratedAs, " ", "")
+	return reflect.DeepEqual(r, a)
+}
+
+func (r ColumnDefinition) EqualsExceptColumnName(c ColumnDefinition) bool {
+	r.ColumnName = ""
+	c.ColumnName = ""
+	return r.Equals(c)
+}
+
 func (r ColumnDefinition) String() string {
 	return fmt.Sprintf("`%s`\t%s\t%s",
 		r.ColumnName,
@@ -66,14 +81,17 @@ func (r ColumnDefinition) StringWithPos(pos string) string {
 type ColumnOptions struct {
 	Nullability               string
 	Default                   string
+	GeneratedAs               string
+	GeneratedColumnType       string
 	Visibility                string
 	AutoIncrement             bool
 	Unique                    bool
 	Primary                   bool
+	Comment                   string
 	ReferenceDefinition       ReferenceDefinition
 	CheckConstraintDefinition CheckConstraintDefinition
 	OnUpdate                  string
-	GeneratedAs               string
+	Srid                      string
 }
 
 func (r ColumnOptions) String() string {
@@ -86,7 +104,13 @@ func (r ColumnOptions) Strings() []string {
 		strs = append(strs, r.Nullability)
 	}
 	if r.Default != "" {
-		strs = append(strs, fmt.Sprintf("DEFAULT %v", r.Default))
+		strs = append(strs, fmt.Sprintf("DEFAULT %s", r.Default))
+	}
+	if r.GeneratedAs != "" {
+		strs = append(strs, fmt.Sprintf("GENERATED ALWAYS AS %s", r.GeneratedAs))
+	}
+	if r.GeneratedColumnType != "" {
+		strs = append(strs, r.GeneratedColumnType)
 	}
 	if r.Visibility != "" {
 		strs = append(strs, r.Visibility)
@@ -99,6 +123,9 @@ func (r ColumnOptions) Strings() []string {
 	}
 	if r.Primary {
 		strs = append(strs, "PRIMARY KEY")
+	}
+	if r.Comment != "" {
+		strs = append(strs, fmt.Sprintf("COMMENT %s", r.Comment))
 	}
 	if r.ReferenceDefinition.TableName != "" {
 		strs = append(strs, r.ReferenceDefinition.String())
@@ -176,8 +203,8 @@ func (t FloatingPointType) String() string {
 	return fmt.Sprintf("%s%s%s%s",
 		t.Name,
 		lenAndPlace,
-		opt(t.Unsigned, " unsigned"),
-		opt(t.Zerofill, " zerofill"))
+		optB(t.Unsigned, " unsigned"),
+		optB(t.Zerofill, " zerofill"))
 }
 
 type DateAndTimeType struct {
@@ -216,13 +243,29 @@ type StringListType struct {
 func (t StringListType) String() string {
 	values := ""
 	if len(t.Values) > 0 {
-		values = fmt.Sprintf("(%s)", joinS(t.Values, ", ", "'"))
+		values = fmt.Sprintf("(%s)", strings.Join(t.Values, ", "))
 	}
 	return fmt.Sprintf("%s%s%s%s",
 		t.Name,
 		values,
 		optS(t.Charset, " CHARACTER SET %s"),
 		optS(t.Collation, " COLLATE %s"))
+}
+
+type JsonType struct {
+	Name string
+}
+
+func (t JsonType) String() string {
+	return t.Name
+}
+
+type SpatialType struct {
+	Name string
+}
+
+func (t SpatialType) String() string {
+	return t.Name
 }
 
 type ReferenceDefinition struct {
@@ -296,14 +339,28 @@ func (r CheckConstraintOptions) Diff(o CheckConstraintOptions) CheckConstraintOp
 }
 
 type KeyPart struct {
-	ColumnName string
-	Length     string
-	Order      string
+	Column string
+	Length string
+	Order  string
+}
+
+func (r KeyPart) Equals(a KeyPart) bool {
+	r.Column = strings.ReplaceAll(r.Column, " ", "")
+	r.Column = strings.ReplaceAll(r.Column, "`", "")
+	a.Column = strings.ReplaceAll(a.Column, " ", "")
+	a.Column = strings.ReplaceAll(a.Column, "`", "")
+	return reflect.DeepEqual(r, a)
 }
 
 func (r KeyPart) String() string {
-	return fmt.Sprintf("`%s`%s%s",
-		r.ColumnName,
+	column := ""
+	if strings.HasPrefix(r.Column, "(") && strings.HasSuffix(r.Column, ")") {
+		column = r.Column
+	} else {
+		column = fmt.Sprintf("`%s`", r.Column)
+	}
+	return fmt.Sprintf("%s%s%s",
+		column,
 		optS(r.Length, "(%s)"),
 		optS(r.Order, " %s"))
 }
@@ -312,6 +369,23 @@ type IndexDefinition struct {
 	IndexName    string
 	KeyPartList  []KeyPart
 	IndexOptions IndexOptions
+}
+
+func (r IndexDefinition) EqualsExceptIndexName(a IndexDefinition) bool {
+	r.IndexName = ""
+	a.IndexName = ""
+	return r.Equals(a)
+}
+func (r IndexDefinition) Equals(a IndexDefinition) bool {
+	if len(r.KeyPartList) != len(a.KeyPartList) {
+		return false
+	}
+	for i := 0; i < len(r.KeyPartList); i++ {
+		if !r.KeyPartList[i].Equals(a.KeyPartList[i]) {
+			return false
+		}
+	}
+	return r.IndexName == a.IndexName && reflect.DeepEqual(r.IndexOptions, a.IndexOptions)
 }
 
 func (r IndexDefinition) String() string {
@@ -402,7 +476,7 @@ func (r IndexOptions) Strings() []string {
 		strs = append(strs, fmt.Sprintf("WITH PARSER %s", r.Parser))
 	}
 	if r.Comment != "" {
-		strs = append(strs, fmt.Sprintf("COMMENT '%s'", r.Comment))
+		strs = append(strs, fmt.Sprintf("COMMENT %s", r.Comment))
 	}
 	if r.Visibility != "" {
 		strs = append(strs, r.Visibility)
@@ -487,31 +561,31 @@ func (r TableOptions) Map() *linkedhashmap.Map {
 		ret.Put("DEFAULT COLLATE", r.DefaultCollate)
 	}
 	if r.Comment != "" {
-		ret.Put("COMMENT", fmt.Sprintf("'%s'", r.Comment))
+		ret.Put("COMMENT", r.Comment)
 	}
 	if r.Compression != "" {
-		ret.Put("COMPRESSION", fmt.Sprintf("'%s'", r.Compression))
+		ret.Put("COMPRESSION", r.Compression)
 	}
 	if r.Connection != "" {
-		ret.Put("CONNECTION", fmt.Sprintf("'%s'", r.Connection))
+		ret.Put("CONNECTION", r.Connection)
 	}
 	if r.DataDirectory != "" {
-		ret.Put("DATA DIRECTORY", fmt.Sprintf("'%s'", r.DataDirectory))
+		ret.Put("DATA DIRECTORY", r.DataDirectory)
 	}
 	if r.IndexDirectory != "" {
-		ret.Put("INDEX DIRECTORY", fmt.Sprintf("'%s'", r.IndexDirectory))
+		ret.Put("INDEX DIRECTORY", r.IndexDirectory)
 	}
 	if r.DelayKeyWrite != "" {
 		ret.Put("DELAY_KEY_WRITE", r.DelayKeyWrite)
 	}
 	if r.Encryption != "" {
-		ret.Put("ENCRYPTION", fmt.Sprintf("'%s'", r.Encryption))
+		ret.Put("ENCRYPTION", r.Encryption)
 	}
 	if r.Engine != "" {
 		ret.Put("ENGINE", r.Engine)
 	}
 	if r.EngineAttribute != "" {
-		ret.Put("ENGINE_ATTRIBUTE", fmt.Sprintf("'%s'", r.EngineAttribute))
+		ret.Put("ENGINE_ATTRIBUTE", r.EngineAttribute)
 	}
 	if r.InsertMethod != "" {
 		ret.Put("INSERT_METHOD", r.InsertMethod)
@@ -529,13 +603,13 @@ func (r TableOptions) Map() *linkedhashmap.Map {
 		ret.Put("PACK_KEYS", r.PackKeys)
 	}
 	if r.Password != "" {
-		ret.Put("PASSWORD", fmt.Sprintf("'%s'", r.Password))
+		ret.Put("PASSWORD", r.Password)
 	}
 	if r.RowFormat != "" {
 		ret.Put("ROW_FORMAT", r.RowFormat)
 	}
 	if r.SecondaryEngineAttribute != "" {
-		ret.Put("SECONDARY_ENGINE_ATTRIBUTE", fmt.Sprintf("'%s'", r.SecondaryEngineAttribute))
+		ret.Put("SECONDARY_ENGINE_ATTRIBUTE", r.SecondaryEngineAttribute)
 	}
 	if r.StatsAutoRecalc != "" {
 		ret.Put("STATS_AUTO_RECALC", r.StatsAutoRecalc)
@@ -550,7 +624,7 @@ func (r TableOptions) Map() *linkedhashmap.Map {
 		ret.Put("TABLESPACE", fmt.Sprintf("%s %s", r.TableSpace, optS(r.TableSpaceStorage, "STORAGE %s")))
 	}
 	if len(r.Union) != 0 {
-		ret.Put("UNION", fmt.Sprintf("(%s)", joinS(r.Union, ", ", "`")))
+		ret.Put("UNION", fmt.Sprintf("(%s)", JoinS(r.Union, ", ", "`")))
 	}
 	return ret
 }
@@ -571,13 +645,145 @@ func (r TableOptions) String() string {
 	return strings.Join(r.Strings(), " ")
 }
 
-type PartitionOptions struct {
-	PartitionBy          interface{}
+type PartitionConfig struct {
+	PartitionBy          PartitionBy
 	Partitions           string
-	SubpartitionBy       interface{}
+	SubpartitionBy       PartitionBy
+	Subpartitions        string
 	PartitionDefinitions []PartitionDefinition
 }
 
+func (r PartitionConfig) Strings() []string {
+	ret := []string{}
+	if r.PartitionBy.Type == "" {
+		return ret
+	}
+	ret = append(ret, fmt.Sprintf("PARTITION BY %s", r.PartitionBy.String()))
+	if r.Partitions != "" {
+		ret = append(ret, fmt.Sprintf("PARTITIONS %s", r.Partitions))
+	}
+	if r.SubpartitionBy.Type != "" {
+		ret = append(ret, fmt.Sprintf("SUBPARTITION BY %s", r.SubpartitionBy.String()))
+	}
+	if r.Subpartitions != "" {
+		ret = append(ret, fmt.Sprintf("SUBPARTITIONS %s", r.Subpartitions))
+	}
+	if len(r.PartitionDefinitions) > 0 {
+		ret = append(ret, "(")
+		for i, p := range r.PartitionDefinitions {
+			if i == len(r.PartitionDefinitions)-1 {
+				ret = append(ret, strings.Repeat(" ", 4)+p.String())
+			} else {
+				ret = append(ret, strings.Repeat(" ", 4)+p.String()+",")
+			}
+		}
+		ret = append(ret, ")")
+	}
+	return ret
+}
+
+func (r PartitionConfig) String() string {
+	return strings.Join(r.Strings(), "\n")
+}
+
 type PartitionDefinition struct {
-	Name string
+	Name             string
+	Operator         string
+	ValueExpression  string
+	PartitionOptions PartitionOptions
+	Subpartitions    []SubpartitionDefinition
+}
+
+func (r PartitionDefinition) Strings() []string {
+	ret := []string{}
+	ret = append(ret, fmt.Sprintf("PARTITION %s VALUES %s (%s)", r.Name, r.Operator, r.ValueExpression))
+	ret = append(ret, r.PartitionOptions.Strings()...)
+	for _, p := range r.Subpartitions {
+		ret = append(ret, p.Strings()...)
+	}
+	return ret
+}
+
+func (r PartitionDefinition) String() string {
+	return strings.Join(r.Strings(), "\n")
+}
+
+type SubpartitionDefinition struct {
+	Name             string
+	PartitionOptions PartitionOptions
+}
+
+func (r SubpartitionDefinition) Strings() []string {
+	ret := []string{}
+	ret = append(ret, fmt.Sprintf("SUBPARTITION %s", r.Name))
+	ret = append(ret, r.PartitionOptions.Strings()...)
+	return ret
+}
+
+func (r SubpartitionDefinition) String() string {
+	return strings.Join(r.Strings(), "\n")
+}
+
+type PartitionBy struct {
+	Type       string
+	Expression string
+	Columns    []string
+}
+
+func (r PartitionBy) String() string {
+	var values string
+	if r.Expression != "" {
+		values = fmt.Sprintf("(%s)", r.Expression)
+	} else {
+		values = "COLUMNS (" + JoinS(r.Columns, ", ", "`") + ")"
+	}
+	return fmt.Sprintf("%s %s", r.Type, values)
+}
+
+type PartitionOptions struct {
+	Engine         string
+	Comment        string
+	DataDirectory  string
+	IndexDirectory string
+	MaxRows        string
+	MinRows        string
+	TableSpace     string
+}
+
+func (r PartitionOptions) Strings() []string {
+	ret := []string{}
+	m := r.Map()
+	for _, k := range m.Keys() {
+		v, ok := m.Get(k)
+		if ok {
+			ret = append(ret, fmt.Sprintf("%s = %s", k, v))
+		}
+	}
+	return ret
+}
+
+func (r PartitionOptions) Map() *linkedhashmap.Map {
+	ret := linkedhashmap.New()
+	if r.Comment != "" {
+		ret.Put("COMMENT", fmt.Sprintf("'%s'", r.Comment))
+	}
+	if r.DataDirectory != "" {
+		ret.Put("DATA DIRECTORY", fmt.Sprintf("'%s'", r.DataDirectory))
+	}
+	if r.IndexDirectory != "" {
+		ret.Put("INDEX DIRECTORY", fmt.Sprintf("'%s'", r.IndexDirectory))
+	}
+	if r.Engine != "" {
+		ret.Put("ENGINE", r.Engine)
+	}
+	if r.MaxRows != "" {
+		ret.Put("MAX_ROWS", r.MaxRows)
+	}
+	if r.MinRows != "" {
+		ret.Put("MIN_ROWS", r.MinRows)
+	}
+	if r.TableSpace != "" {
+		ret.Put("TABLESPACE", r.TableSpace)
+	}
+	return ret
 }

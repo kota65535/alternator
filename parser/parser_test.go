@@ -27,7 +27,7 @@ func TestCreateDb(t *testing.T) {
 			DatabaseOptions: DatabaseOptions{
 				DefaultCharset:    "utf8mb4",
 				DefaultCollate:    "utf8mb4_bin",
-				DefaultEncryption: "Y",
+				DefaultEncryption: "'Y'",
 			},
 		},
 		CreateDatabaseStatement{
@@ -36,7 +36,7 @@ func TestCreateDb(t *testing.T) {
 			DatabaseOptions: DatabaseOptions{
 				DefaultCharset:    "utf8mb4",
 				DefaultCollate:    "utf8mb4_bin",
-				DefaultEncryption: "Y",
+				DefaultEncryption: "'Y'",
 			},
 		},
 	}, r)
@@ -100,23 +100,23 @@ func TestCreateTableWithOptions(t *testing.T) {
 				DefaultCharset:           "utf8mb4",
 				Checksum:                 "1",
 				DefaultCollate:           "utf8mb4_bin",
-				Comment:                  "foo",
-				Compression:              "ZLIB",
-				Connection:               "connect_string",
-				DataDirectory:            "path1",
-				IndexDirectory:           "path2",
+				Comment:                  "'foo'",
+				Compression:              "'ZLIB'",
+				Connection:               "'connect_string'",
+				DataDirectory:            "'path1'",
+				IndexDirectory:           "'path2'",
 				DelayKeyWrite:            "1",
-				Encryption:               "Y",
+				Encryption:               "'Y'",
 				Engine:                   "INNODB",
-				EngineAttribute:          "attr1",
+				EngineAttribute:          "'attr1'",
 				InsertMethod:             "FIRST",
 				KeyBlockSize:             "1",
 				MaxRows:                  "1",
 				MinRows:                  "1",
 				PackKeys:                 "1",
-				Password:                 "password",
+				Password:                 "'password'",
 				RowFormat:                "DYNAMIC",
-				SecondaryEngineAttribute: "attr2",
+				SecondaryEngineAttribute: "'attr2'",
 				StatsAutoRecalc:          "1",
 				StatsPersistent:          "1",
 				StatsSamplePages:         "1",
@@ -128,6 +128,18 @@ func TestCreateTableWithOptions(t *testing.T) {
 	}, r)
 
 	b1, err := ioutil.ReadFile("test/table/options/output.sql")
+
+	assert.Equal(t, string(b1), r[0].String())
+}
+
+func TestCreateTableWithExpressions(t *testing.T) {
+	f, err := os.Open("test/table/expression/input.sql")
+	p := NewParser(f)
+	r, err := p.Parse()
+
+	require.NoError(t, err)
+
+	b1, err := ioutil.ReadFile("test/table/expression/output.sql")
 
 	assert.Equal(t, string(b1), r[0].String())
 }
@@ -158,7 +170,7 @@ func TestCreateTableWithNumericTypes(t *testing.T) {
 					},
 					ColumnOptions: ColumnOptions{
 						Nullability: "NOT NULL",
-						Default:     "1",
+						Default:     "0b001",
 					},
 				},
 				&ColumnDefinition{
@@ -195,7 +207,7 @@ func TestCreateTableWithNumericTypes(t *testing.T) {
 					},
 					ColumnOptions: ColumnOptions{
 						Nullability: "NOT NULL",
-						Default:     "1",
+						Default:     "TRUE",
 					},
 				},
 				&ColumnDefinition{
@@ -214,7 +226,7 @@ func TestCreateTableWithNumericTypes(t *testing.T) {
 					},
 					ColumnOptions: ColumnOptions{
 						Nullability: "NOT NULL",
-						Default:     "1",
+						Default:     "0x123",
 					},
 				},
 				&ColumnDefinition{
@@ -233,7 +245,7 @@ func TestCreateTableWithNumericTypes(t *testing.T) {
 					},
 					ColumnOptions: ColumnOptions{
 						Nullability: "NOT NULL",
-						Default:     "1",
+						Default:     "0x0123",
 					},
 				},
 				&ColumnDefinition{
@@ -303,13 +315,13 @@ func TestCreateTableWithNumericTypes(t *testing.T) {
 				},
 				&ColumnDefinition{
 					ColumnName: "float1",
-					DataType: FixedPointType{
+					DataType: FloatingPointType{
 						Name: "float",
 					},
 				},
 				&ColumnDefinition{
 					ColumnName: "float2",
-					DataType: FixedPointType{
+					DataType: FloatingPointType{
 						Name:       "float",
 						FieldLen:   "2",
 						FieldScale: "1",
@@ -318,18 +330,18 @@ func TestCreateTableWithNumericTypes(t *testing.T) {
 					},
 					ColumnOptions: ColumnOptions{
 						Nullability: "NOT NULL",
-						Default:     "1.1",
+						Default:     "(rand() * rand())",
 					},
 				},
 				&ColumnDefinition{
 					ColumnName: "double1",
-					DataType: FixedPointType{
+					DataType: FloatingPointType{
 						Name: "double",
 					},
 				},
 				&ColumnDefinition{
 					ColumnName: "double2",
-					DataType: FixedPointType{
+					DataType: FloatingPointType{
 						Name:       "double",
 						FieldLen:   "2",
 						FieldScale: "1",
@@ -339,6 +351,15 @@ func TestCreateTableWithNumericTypes(t *testing.T) {
 					ColumnOptions: ColumnOptions{
 						Nullability: "NOT NULL",
 						Default:     "1.1",
+					},
+				},
+				&ColumnDefinition{
+					ColumnName: "double3",
+					DataType: FloatingPointType{
+						Name: "double",
+					},
+					ColumnOptions: ColumnOptions{
+						GeneratedAs: "(sqrt(`double1` * `double2`))",
 					},
 				},
 			},
@@ -415,7 +436,7 @@ func TestCreateTableWithStringTypes(t *testing.T) {
 					},
 					ColumnOptions: ColumnOptions{
 						Nullability: "NOT NULL",
-						Default:     "'a'",
+						Default:     "(uuid_to_bin(uuid()))",
 					},
 				},
 				&ColumnDefinition{
@@ -571,14 +592,14 @@ func TestCreateTableWithStringTypes(t *testing.T) {
 					ColumnName: "enum1",
 					DataType: StringListType{
 						Name:   "enum",
-						Values: []string{"a"},
+						Values: []string{"'a'"},
 					},
 				},
 				&ColumnDefinition{
 					ColumnName: "enum2",
 					DataType: StringListType{
 						Name:      "enum",
-						Values:    []string{"a", "b"},
+						Values:    []string{"'a'", "'b'"},
 						Charset:   "utf8mb4",
 						Collation: "utf8mb4_bin",
 					},
@@ -591,14 +612,14 @@ func TestCreateTableWithStringTypes(t *testing.T) {
 					ColumnName: "set1",
 					DataType: StringListType{
 						Name:   "set",
-						Values: []string{"a"},
+						Values: []string{"'a'"},
 					},
 				},
 				&ColumnDefinition{
 					ColumnName: "set2",
 					DataType: StringListType{
 						Name:      "set",
-						Values:    []string{"a", "b"},
+						Values:    []string{"'a'", "'b'"},
 						Charset:   "utf8mb4",
 						Collation: "utf8mb4_bin",
 					},
@@ -640,6 +661,7 @@ func TestCreateTableWithDateAndTimeTypes(t *testing.T) {
 					},
 					ColumnOptions: ColumnOptions{
 						Nullability: "NOT NULL",
+						Default:     "(CURRENT_DATE + INTERVAL 1 YEAR)",
 					},
 				},
 				&ColumnDefinition{
@@ -774,44 +796,44 @@ func TestCreateTableWithindexes(t *testing.T) {
 				},
 				&IndexDefinition{
 					KeyPartList: []KeyPart{
-						{ColumnName: "int1"},
+						{Column: "int1"},
 					},
 				},
 				&IndexDefinition{
 					IndexName: "idx1",
 					KeyPartList: []KeyPart{
-						{ColumnName: "int2", Order: "ASC"},
-						{ColumnName: "int3", Order: "DESC"},
+						{Column: "int2", Order: "ASC"},
+						{Column: "int3", Order: "DESC"},
 					},
 				},
 				&IndexDefinition{
 					IndexName: "idx2",
 					KeyPartList: []KeyPart{
-						{ColumnName: "varchar1", Length: "5"},
+						{Column: "varchar1", Length: "5"},
 					},
 					IndexOptions: IndexOptions{
 						IndexType:    "BTREE",
 						KeyBlockSize: "1",
 						Visibility:   "VISIBLE",
-						Comment:      "foo",
+						Comment:      "'foo'",
 					},
 				},
 				&FullTextIndexDefinition{
 					KeyPartList: []KeyPart{
-						{ColumnName: "varchar2"},
+						{Column: "varchar2"},
 					},
 					IndexOptions: IndexOptions{},
 				},
 				&FullTextIndexDefinition{
 					IndexName: "idx3",
 					KeyPartList: []KeyPart{
-						{ColumnName: "varchar3"},
+						{Column: "varchar3"},
 					},
 					IndexOptions: IndexOptions{
 						KeyBlockSize: "1",
 						Parser:       "ngram",
 						Visibility:   "VISIBLE",
-						Comment:      "foo",
+						Comment:      "'foo'",
 					},
 				},
 			},
@@ -849,22 +871,22 @@ func TestCreateTableWithConstraints(t *testing.T) {
 				},
 				&PrimaryKeyDefinition{
 					KeyPartList: []KeyPart{
-						{ColumnName: "int1", Order: "DESC"},
+						{Column: "int1", Order: "DESC"},
 					},
 				},
 				&UniqueKeyDefinition{
 					KeyPartList: []KeyPart{
-						{ColumnName: "int2", Order: "DESC"},
+						{Column: "int2", Order: "DESC"},
 					},
 				},
 				&ForeignKeyDefinition{
 					KeyPartList: []KeyPart{
-						{ColumnName: "int1"},
+						{Column: "int1"},
 					},
 					ReferenceDefinition: ReferenceDefinition{
 						TableName: "t1",
 						KeyPartList: []KeyPart{
-							{ColumnName: "int2"},
+							{Column: "int2"},
 						},
 					},
 				},
@@ -891,41 +913,41 @@ func TestCreateTableWithConstraints(t *testing.T) {
 				&PrimaryKeyDefinition{
 					ConstraintName: "u1",
 					KeyPartList: []KeyPart{
-						{ColumnName: "int1"},
-						{ColumnName: "int2"},
+						{Column: "int1"},
+						{Column: "int2"},
 					},
 					IndexOptions: IndexOptions{
 						IndexType:    "BTREE",
 						KeyBlockSize: "1",
 						Visibility:   "VISIBLE",
-						Comment:      "foo",
+						Comment:      "'foo'",
 					},
 				},
 				&UniqueKeyDefinition{
 					ConstraintName: "u2",
 					KeyPartList: []KeyPart{
-						{ColumnName: "int1", Order: "ASC"},
-						{ColumnName: "int2"},
+						{Column: "int1", Order: "ASC"},
+						{Column: "int2"},
 					},
 					IndexOptions: IndexOptions{
 						IndexType:    "BTREE",
 						KeyBlockSize: "1",
 						Visibility:   "VISIBLE",
-						Comment:      "foo",
+						Comment:      "'foo'",
 					},
 				},
 				&ForeignKeyDefinition{
 					ConstraintName: "u3",
 					IndexName:      "i3",
 					KeyPartList: []KeyPart{
-						{ColumnName: "int1", Order: "ASC"},
-						{ColumnName: "int2"},
+						{Column: "int1", Order: "ASC"},
+						{Column: "int2"},
 					},
 					ReferenceDefinition: ReferenceDefinition{
 						TableName: "t1",
 						KeyPartList: []KeyPart{
-							{ColumnName: "int1"},
-							{ColumnName: "int2"},
+							{Column: "int1"},
+							{Column: "int2"},
 						},
 						ReferenceOptions: ReferenceOptions{
 							Match:    "FULL",
@@ -943,4 +965,227 @@ func TestCreateTableWithConstraints(t *testing.T) {
 
 	assert.Equal(t, string(b1), r[1].String())
 	assert.Equal(t, string(b2), r[2].String())
+}
+
+func TestCreateTableWithOtherTypes(t *testing.T) {
+
+	f, err := os.Open("test/table/others/input.sql")
+	p := NewParser(f)
+	r, err := p.Parse()
+
+	require.NoError(t, err)
+
+	assert.Equal(t,
+		CreateTableStatement{
+			TableName: "t1",
+			CreateDefinitions: []interface{}{
+				&ColumnDefinition{
+					ColumnName: "json1",
+					DataType: JsonType{
+						Name: "json",
+					},
+				},
+				&ColumnDefinition{
+					ColumnName: "geometry1",
+					DataType: SpatialType{
+						Name: "geometry",
+					},
+				},
+				&ColumnDefinition{
+					ColumnName: "point1",
+					DataType: SpatialType{
+						Name: "point",
+					},
+				},
+				&ColumnDefinition{
+					ColumnName: "linestring1",
+					DataType: SpatialType{
+						Name: "linestring",
+					},
+				},
+				&ColumnDefinition{
+					ColumnName: "polygon1",
+					DataType: SpatialType{
+						Name: "polygon",
+					},
+				},
+				&ColumnDefinition{
+					ColumnName: "multipoint1",
+					DataType: SpatialType{
+						Name: "multipoint",
+					},
+				},
+				&ColumnDefinition{
+					ColumnName: "multilinestring1",
+					DataType: SpatialType{
+						Name: "multilinestring",
+					},
+				},
+				&ColumnDefinition{
+					ColumnName: "multipolygon1",
+					DataType: SpatialType{
+						Name: "multipolygon",
+					},
+				},
+				&ColumnDefinition{
+					ColumnName: "geometrycollection1",
+					DataType: SpatialType{
+						Name: "geometrycollection",
+					},
+				},
+			},
+		},
+		r[0])
+
+	b1, err := ioutil.ReadFile("test/table/others/output.sql")
+
+	assert.Equal(t, string(b1), r[0].String())
+}
+
+func TestCreateTableWithCheckConstraints(t *testing.T) {
+
+	f, err := os.Open("test/table/check/input.sql")
+	p := NewParser(f)
+	_, _ = p.Parse()
+
+	require.NoError(t, err)
+
+}
+
+func TestCreateTableWithPartitions(t *testing.T) {
+
+	f, err := os.Open("test/table/partition/input.sql")
+	p := NewParser(f)
+	r, err := p.Parse()
+
+	require.NoError(t, err)
+
+	assert.Equal(t,
+		CreateTableStatement{
+			TableName: "t1",
+			CreateDefinitions: []interface{}{
+				&ColumnDefinition{
+					ColumnName: "int1",
+					DataType: IntegerType{
+						Name: "int",
+					},
+				},
+				&PrimaryKeyDefinition{
+					KeyPartList: []KeyPart{{Column: "int1"}},
+				},
+			},
+			Partitions: PartitionConfig{
+				PartitionBy: PartitionBy{
+					Type:       "HASH",
+					Expression: "`int1`",
+				},
+				PartitionDefinitions: []PartitionDefinition{},
+			},
+		}, r[0])
+
+	b1, err := ioutil.ReadFile("test/table/partition/output1.sql")
+	assert.Equal(t, string(b1), r[0].String())
+
+	assert.Equal(t,
+		CreateTableStatement{
+			TableName: "t2",
+			CreateDefinitions: []interface{}{
+				&ColumnDefinition{
+					ColumnName: "int1",
+					DataType: IntegerType{
+						Name: "int",
+					},
+				},
+				&ColumnDefinition{
+					ColumnName: "date1",
+					DataType: DateAndTimeType{
+						Name: "date",
+					},
+				},
+			},
+			Partitions: PartitionConfig{
+				PartitionBy: PartitionBy{
+					Type:       "RANGE",
+					Expression: "year(`date1`)",
+				},
+				Partitions: "3",
+				SubpartitionBy: PartitionBy{
+					Type:       "HASH",
+					Expression: "to_days(`date1`)",
+				},
+				Subpartitions: "2",
+				PartitionDefinitions: []PartitionDefinition{
+					{
+						Name:            "p0",
+						Operator:        "LESS THAN",
+						ValueExpression: "1990",
+						Subpartitions:   []SubpartitionDefinition{},
+					},
+					{
+						Name:            "p1",
+						Operator:        "LESS THAN",
+						ValueExpression: "2000",
+						Subpartitions:   []SubpartitionDefinition{},
+					},
+					{
+						Name:            "p2",
+						Operator:        "LESS THAN",
+						ValueExpression: "MAXVALUE",
+						Subpartitions:   []SubpartitionDefinition{},
+					},
+				},
+			},
+		}, r[1])
+
+	b2, err := ioutil.ReadFile("test/table/partition/output2.sql")
+	assert.Equal(t, string(b2), r[1].String())
+
+	assert.Equal(t,
+		CreateTableStatement{
+			TableName: "t3",
+			CreateDefinitions: []interface{}{
+				&ColumnDefinition{
+					ColumnName: "double1",
+					DataType: FloatingPointType{
+						Name: "double",
+					},
+				},
+				&ColumnDefinition{
+					ColumnName: "double2",
+					DataType: FloatingPointType{
+						Name: "double",
+					},
+				},
+			},
+			Partitions: PartitionConfig{
+				PartitionBy: PartitionBy{
+					Type:    "RANGE",
+					Columns: []string{`double1`, `double2`},
+				},
+				Partitions: "3",
+				PartitionDefinitions: []PartitionDefinition{
+					{
+						Name:            "p0",
+						Operator:        "LESS THAN",
+						ValueExpression: "1990.1",
+						Subpartitions:   []SubpartitionDefinition{},
+					},
+					{
+						Name:            "p1",
+						Operator:        "LESS THAN",
+						ValueExpression: "2000.1",
+						Subpartitions:   []SubpartitionDefinition{},
+					},
+					{
+						Name:            "p2",
+						Operator:        "LESS THAN",
+						ValueExpression: "MAXVALUE",
+						Subpartitions:   []SubpartitionDefinition{},
+					},
+				},
+			},
+		}, r[2])
+
+	b3, err := ioutil.ReadFile("test/table/partition/output3.sql")
+	assert.Equal(t, string(b3), r[2].String())
 }

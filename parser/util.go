@@ -6,6 +6,16 @@ import (
 	"strings"
 )
 
+func compactJoin(array []string, delim string) string {
+	var ret []string
+	for _, e := range array {
+		if e != "" {
+			ret = append(ret, e)
+		}
+	}
+	return strings.Join(ret, delim)
+}
+
 func opt(t interface{}, s string) string {
 	if t == nil {
 		return ""
@@ -31,7 +41,7 @@ func optS(s1 string, s2 string) string {
 	return fmt.Sprintf(s2, s1)
 }
 
-func joinS(elems []string, sep string, enclose string) string {
+func JoinS(elems []string, sep string, enclose string) string {
 	var enclosed []string
 	for _, e := range elems {
 		enclosed = append(enclosed, enclose+e+enclose)
