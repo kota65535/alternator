@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/emirpasic/gods/sets/linkedhashset"
 	"github.com/kota65535/alternator/parser"
-	"reflect"
 	"sort"
 )
 
@@ -63,7 +62,7 @@ func NewIndexAlterations(
 		s := v.(string)
 		t1 := fromMap[s]
 		t2 := toMap[s]
-		if indexDefsEqual(*t1, *t2) {
+		if t1.EqualsExceptIndexName(*t2) {
 			if t2.IndexName != "" && t1.IndexName != t2.IndexName {
 				renamed = append(renamed, &RenamedIndex{
 					From:       t1,
@@ -158,7 +157,7 @@ func (r *IndexAlterations) HandleColumnRename(fromName string, toName string) {
 			if keyPartContains(d.This.KeyPartList, fromName) && keyPartContains(a.This.KeyPartList, toName) {
 				// update key parts
 				d.This.KeyPartList = keyPartReplace(d.This.KeyPartList, fromName, toName)
-				if indexDefsEqual(*d.This, *a.This) {
+				if d.This.EqualsExceptIndexName(*a.This) {
 					r.Retained = append(r.Retained, &RetainedIndex{
 						This:       a.This,
 						Sequential: a.Sequential,
@@ -291,7 +290,7 @@ func getIndexOrder(from []*parser.IndexDefinition, to []*parser.IndexDefinition,
 		length := len(all[i].KeyPartList)
 		for a := 0; a < length; a++ {
 			if all[i].KeyPartList[a] != all[j].KeyPartList[a] {
-				return columnOrder[all[i].KeyPartList[a].ColumnName] < columnOrder[all[j].KeyPartList[a].ColumnName]
+				return columnOrder[all[i].KeyPartList[a].Column] < columnOrder[all[j].KeyPartList[a].Column]
 			}
 		}
 		return true
@@ -303,14 +302,8 @@ func getIndexOrder(from []*parser.IndexDefinition, to []*parser.IndexDefinition,
 	return ret
 }
 
-func indexDefsEqual(c1 parser.IndexDefinition, c2 parser.IndexDefinition) bool {
-	c1.IndexName = ""
-	c2.IndexName = ""
-	return reflect.DeepEqual(c1, c2)
-}
-
 func keyPartContains(keyParts []parser.KeyPart, columnName string) bool {
-	return ContainsIf(keyParts, func(r parser.KeyPart) bool { return r.ColumnName == columnName })
+	return ContainsIf(keyParts, func(r parser.KeyPart) bool { return r.Column == columnName })
 }
 
 func keyPartId(keyParts []parser.KeyPart) string {
@@ -320,8 +313,8 @@ func keyPartId(keyParts []parser.KeyPart) string {
 func keyPartReplace(keyParts []parser.KeyPart, fromName string, toName string) []parser.KeyPart {
 	ret := []parser.KeyPart{}
 	for _, k := range keyParts {
-		if k.ColumnName == fromName {
-			k.ColumnName = toName
+		if k.Column == fromName {
+			k.Column = toName
 			ret = append(ret, k)
 		} else {
 			ret = append(ret, k)

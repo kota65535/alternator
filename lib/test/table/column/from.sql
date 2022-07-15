@@ -7,7 +7,7 @@ CREATE TABLE `t1`
 (
     `int1`     int AUTO_INCREMENT,
     `varchar1` varchar(20),
-    `varchar2` varchar(10),
+    `varchar2` varchar(10) AS (concat(`varchar1`,'foo')),
     PRIMARY KEY (`int1`),
     UNIQUE KEY (`varchar1`)
 );

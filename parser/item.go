@@ -339,17 +339,10 @@ func (r CheckConstraintOptions) Diff(o CheckConstraintOptions) CheckConstraintOp
 }
 
 type KeyPart struct {
-	Column string
-	Length string
-	Order  string
-}
-
-func (r KeyPart) Equals(a KeyPart) bool {
-	r.Column = strings.ReplaceAll(r.Column, " ", "")
-	r.Column = strings.ReplaceAll(r.Column, "`", "")
-	a.Column = strings.ReplaceAll(a.Column, " ", "")
-	a.Column = strings.ReplaceAll(a.Column, "`", "")
-	return reflect.DeepEqual(r, a)
+	Column     string
+	Length     string
+	Order      string
+	Expression string
 }
 
 func (r KeyPart) String() string {
@@ -379,11 +372,6 @@ func (r IndexDefinition) EqualsExceptIndexName(a IndexDefinition) bool {
 func (r IndexDefinition) Equals(a IndexDefinition) bool {
 	if len(r.KeyPartList) != len(a.KeyPartList) {
 		return false
-	}
-	for i := 0; i < len(r.KeyPartList); i++ {
-		if !r.KeyPartList[i].Equals(a.KeyPartList[i]) {
-			return false
-		}
 	}
 	return r.IndexName == a.IndexName && reflect.DeepEqual(r.IndexOptions, a.IndexOptions)
 }

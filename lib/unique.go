@@ -308,7 +308,7 @@ func getUniqueKeyOrder(from []*parser.UniqueKeyDefinition, to []*parser.UniqueKe
 		length := len(all[i].KeyPartList)
 		for a := 0; a < length; a++ {
 			if all[i].KeyPartList[a] != all[j].KeyPartList[a] {
-				return columnOrder[all[i].KeyPartList[a].ColumnName] < columnOrder[all[j].KeyPartList[a].ColumnName]
+				return columnOrder[all[i].KeyPartList[a].Column] < columnOrder[all[j].KeyPartList[a].Column]
 			}
 		}
 		return true

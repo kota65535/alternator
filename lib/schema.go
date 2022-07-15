@@ -213,21 +213,21 @@ func normalizeStatements(statements []parser.Statement) []Schema {
 				// Separate to primary key definition
 				if v.ColumnOptions.Primary {
 					primaryKeys = append(primaryKeys, &parser.PrimaryKeyDefinition{
-						KeyPartList: []parser.KeyPart{{ColumnName: v.ColumnName}},
+						KeyPartList: []parser.KeyPart{{Column: v.ColumnName}},
 					})
 					v.ColumnOptions.Primary = false
 				}
 				// Separate to unique key definition
 				if v.ColumnOptions.Unique {
 					uniqueKeys = append(uniqueKeys, &parser.UniqueKeyDefinition{
-						KeyPartList: []parser.KeyPart{{ColumnName: v.ColumnName}},
+						KeyPartList: []parser.KeyPart{{Column: v.ColumnName}},
 					})
 					v.ColumnOptions.Unique = false
 				}
 				// Separate to foreign key definition
 				if v.ColumnOptions.ReferenceDefinition.TableName != "" {
 					foreignKeys = append(foreignKeys, &parser.ForeignKeyDefinition{
-						KeyPartList: []parser.KeyPart{{ColumnName: v.ColumnName}},
+						KeyPartList: []parser.KeyPart{{Column: v.ColumnName}},
 						ReferenceDefinition: parser.ReferenceDefinition{
 							TableName:        v.ColumnOptions.ReferenceDefinition.TableName,
 							KeyPartList:      v.ColumnOptions.ReferenceDefinition.KeyPartList,

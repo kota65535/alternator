@@ -9,14 +9,13 @@ import (
 const MaxInt = int(^uint(0) >> 1)
 
 type Lexer struct {
-	reader                io.Reader
-	buf                   string
-	loadedLine            string
-	nextPos               Position
-	TokenTypes            []TokenType
-	SkippedTokenTypes     []TokenType
-	SyntaxAwareTokenTypes []*SyntaxAwareTokenType
-	prevTokens            []*Token
+	reader            io.Reader
+	buf               string
+	loadedLine        string
+	nextPos           Position
+	TokenTypes        []TokenType
+	SkippedTokenTypes []TokenType
+	prevTokens        []*Token
 }
 
 func NewLexer(reader io.Reader, tokenTypes []TokenType, skippedTokenTypes []TokenType) *Lexer {
@@ -39,9 +38,6 @@ func (l *Lexer) Peek() (*Token, error) {
 	sort.SliceStable(l.TokenTypes, func(i, j int) bool {
 		return l.TokenTypes[i].GetPriority() < l.TokenTypes[j].GetPriority()
 	})
-	sort.SliceStable(l.SyntaxAwareTokenTypes, func(i, j int) bool {
-		return l.TokenTypes[i].GetPriority() < l.TokenTypes[j].GetPriority()
-	})
 
 	// Find all matching tokens
 	curPriority := MaxInt
@@ -57,22 +53,6 @@ func (l *Lexer) Peek() (*Token, error) {
 		if t := tokenType.FindToken(l.buf, l.nextPos); t != nil {
 			found = append(found, t)
 			curPriority = tokenType.GetPriority()
-		}
-	}
-
-	for _, tokenType := range l.SyntaxAwareTokenTypes {
-		if !tokenType.Enabled {
-			continue
-		}
-		// Check priority.
-		// If once found, all tokens with lower priority (higher value) are skipped
-		if curPriority < tokenType.GetPriority() {
-			continue
-		}
-		l.skipTokens()
-		l.readBufIfNeed()
-		if t := tokenType.tokenType.FindToken(l.buf, l.nextPos); t != nil {
-			found = append(found, t)
 		}
 	}
 

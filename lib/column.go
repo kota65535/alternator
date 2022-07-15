@@ -3,7 +3,6 @@ package lib
 import (
 	"fmt"
 	"github.com/kota65535/alternator/parser"
-	"reflect"
 )
 
 type ColumnAlterations struct {
@@ -72,7 +71,7 @@ func NewColumnAlterations(from []*parser.ColumnDefinition, to []*parser.ColumnDe
 		c2 := to[p2]
 
 		// Skip if equals
-		if reflect.DeepEqual(c1, c2) {
+		if c1.Equals(*c2) {
 			retained = append(retained, &RetainedColumn{
 				From:       c1,
 				To:         c2,
@@ -88,7 +87,7 @@ func NewColumnAlterations(from []*parser.ColumnDefinition, to []*parser.ColumnDe
 		_, toHasC1 := toColumnNames[c1.ColumnName]
 
 		// Renamed if column definitions are the same and both table do not have the opponent's column name
-		if !fromHasC2 && !toHasC1 && columnDefsEqual(*c1, *c2) {
+		if !fromHasC2 && !toHasC1 && c1.EqualsExceptColumnName(*c2) {
 			renamed = append(renamed, &RenamedColumn{
 				From:       c1,
 				To:         c2,
@@ -260,10 +259,6 @@ func (r AddedColumn) Id() string {
 	return r.This.ColumnName
 }
 
-func (r AddedColumn) IsValid() bool {
-	return true
-}
-
 type ModifiedColumn struct {
 	From *parser.ColumnDefinition
 	To   *parser.ColumnDefinition
@@ -282,10 +277,6 @@ func (r ModifiedColumn) Diff() []string {
 
 func (r ModifiedColumn) Id() string {
 	return r.To.ColumnName
-}
-
-func (r ModifiedColumn) IsValid() bool {
-	return !columnDefsEqual(*r.From, *r.To)
 }
 
 type MovedColumn struct {
@@ -313,10 +304,6 @@ func (r MovedColumn) Id() string {
 	return r.To.ColumnName
 }
 
-func (r MovedColumn) IsValid() bool {
-	return true
-}
-
 type DroppedColumn struct {
 	This *parser.ColumnDefinition
 	Sequential
@@ -334,10 +321,6 @@ func (r DroppedColumn) Diff() []string {
 
 func (r DroppedColumn) Id() string {
 	return r.This.ColumnName
-}
-
-func (r DroppedColumn) IsValid() bool {
-	return true
 }
 
 type RenamedColumn struct {
@@ -360,10 +343,6 @@ func (r RenamedColumn) Id() string {
 	return r.To.ColumnName
 }
 
-func (r RenamedColumn) IsValid() bool {
-	return r.From.ColumnName != r.To.ColumnName
-}
-
 type RetainedColumn struct {
 	From *parser.ColumnDefinition
 	To   *parser.ColumnDefinition
@@ -382,10 +361,6 @@ func (r RetainedColumn) Diff() []string {
 
 func (r RetainedColumn) Id() string {
 	return r.To.ColumnName
-}
-
-func (r RetainedColumn) IsValid() bool {
-	return true
 }
 
 func getColumnOrder(from []*parser.ColumnDefinition, to []*parser.ColumnDefinition) map[string]int {
@@ -413,11 +388,4 @@ func getColumnOrder(from []*parser.ColumnDefinition, to []*parser.ColumnDefiniti
 		seq += 2
 	}
 	return ret
-}
-
-// Compare 2 column definitions, ignoring column name.
-func columnDefsEqual(c1 parser.ColumnDefinition, c2 parser.ColumnDefinition) bool {
-	c1.ColumnName = ""
-	c2.ColumnName = ""
-	return reflect.DeepEqual(c1, c2)
 }

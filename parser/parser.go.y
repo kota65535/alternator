@@ -1460,8 +1460,10 @@ KeyPart:
 	}
 |	Expression KeyOrder
 	{
+		column := findFirstIdentifier($1)
 		$$ = KeyPart{
-			Column: $1,
+			Column: column,
+			Expression: $1,
 			Order: $2,
 		}
 	}
@@ -1629,12 +1631,12 @@ ReferencialAction:
 	}
 
 CheckConstraintDefinition:
-	OptConstraint CHECK EXPRESSION CheckConstraintOptions
+	OptConstraint CHECK lp Expression rp CheckConstraintOptions
 	{
 		$$ = &CheckConstraintDefinition{
 			ConstraintName: $1,
-			Check: $3.Literal,
-			CheckConstraintOptions: $4.(CheckConstraintOptions),
+			Check: $4,
+			CheckConstraintOptions: $6.(CheckConstraintOptions),
 		}
 	}
 

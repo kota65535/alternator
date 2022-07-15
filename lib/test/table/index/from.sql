@@ -19,5 +19,5 @@ CREATE TABLE `t1`
     # removed
     INDEX idx1 (`int4`),
     # renamed
-    INDEX idx2 (`int6`)
+    INDEX idx2 ((`int6`*2))
 );

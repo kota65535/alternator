@@ -3,7 +3,7 @@
   (
       `int1`     int         NOT NULL AUTO_INCREMENT,
       `varchar1` varchar(20),
-      `varchar2` varchar(10) GENERATED ALWAYS AS (concat(`varchar1`,'foo')),
+      `varchar2` varchar(10),
       PRIMARY KEY (`int1`),
       UNIQUE KEY (`varchar1`)
   );

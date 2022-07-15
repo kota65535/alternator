@@ -6,6 +6,22 @@ import (
 	"strings"
 )
 
+func findFirstIdentifier(s string) string {
+	isIn := false
+	name := ""
+	for _, c := range s {
+		if c == '`' {
+			if isIn {
+				return name
+			}
+			isIn = !isIn
+		} else if isIn {
+			name = name + string(c)
+		}
+	}
+	return ""
+}
+
 func compactJoin(array []string, delim string) string {
 	var ret []string
 	for _, e := range array {
@@ -14,17 +30,6 @@ func compactJoin(array []string, delim string) string {
 		}
 	}
 	return strings.Join(ret, delim)
-}
-
-func opt(t interface{}, s string) string {
-	if t == nil {
-		return ""
-	}
-	v := fmt.Sprintf("%v", t)
-	if v == "" {
-		return ""
-	}
-	return fmt.Sprintf(s, v)
 }
 
 func optB(b bool, s string) string {

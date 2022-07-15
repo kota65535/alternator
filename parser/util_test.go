@@ -36,3 +36,9 @@ func TestStructDifference(t *testing.T) {
 	assert.Equal(t, "", diff.AutoIncrement)
 	assert.Equal(t, "3", diff.AvgRowLength)
 }
+
+func TestFindFirstIdentifier(t *testing.T) {
+	idents := findFirstIdentifier("2 * `t1` * 2 + (`t3` + @@`aa`")
+
+	assert.Equal(t, "t1", idents)
+}

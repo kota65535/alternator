@@ -411,8 +411,6 @@ func (r ModifiedTable) Alterations() []Alteration {
 }
 
 func (r ModifiedTable) Statements() []string {
-	r.preprocessStatements()
-
 	alterations := []Alteration{}
 	alterations = append(alterations, r.Columns.Alterations()...)
 	alterations = append(alterations, r.ForeignKeys.Alterations()...)
@@ -473,17 +471,6 @@ func (r ModifiedTable) Diff() []string {
 
 func (r ModifiedTable) Id() string {
 	return r.To.TableName
-}
-
-func (r *ModifiedTable) preprocessStatements() {
-	//for _, pk := range r.PrimaryKeys.Added {
-	//	for i, _ := range r.Columns.Modified {
-	//		c := r.Columns.Modified[i]
-	//		if Index(pk.This.KeyPartList, c.From.ColumnName) >= 0 {
-	//			c.From.ColumnOptions.Nullability = "NOT NULL"
-	//		}
-	//	}
-	//}
 }
 
 type DroppedTable struct {

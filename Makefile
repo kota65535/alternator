@@ -18,8 +18,11 @@ compose-up:
 	while ! (mysqladmin ping -h 127.0.0.1 -P 13306 -u root --silent); do sleep 5; done
 	while ! (mysqladmin ping -h 127.0.0.1 -P 13307 -u root --silent); do sleep 5; done
 
-yacc:
+yacc: generate
 	goyacc -o parser/parser.go parser/parser.go.y
+
+generate:
+	go generate ./...
 
 clean:
 	rm -f alternator-darwin alternator-linux y.output cover.out cover.html

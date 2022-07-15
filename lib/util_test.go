@@ -31,30 +31,3 @@ func TestSort(t *testing.T) {
 
 	fmt.Println(arr)
 }
-
-type I interface {
-	Get() int
-}
-
-type Impl1 struct {
-}
-
-func (r Impl1) Get() int {
-	return 1
-}
-
-type Impl2 struct {
-}
-
-func (r Impl2) Get() int {
-	return 2
-}
-
-func TestAlterationaa(t *testing.T) {
-
-	arr := []I{}
-
-	arr = append(arr, &Impl1{})
-	arr = append(arr, &Impl2{})
-
-}

@@ -6,7 +6,7 @@ CREATE TABLE `t1`
 (
     `int1`     int PRIMARY KEY AUTO_INCREMENT,
     `varchar1` varchar(20) UNIQUE,
-    `varchar2` varchar(10) AS (concat(`varchar1`, 'foo'))
+    `varchar2` varchar(10)
 );
 
 CREATE TABLE `t2`

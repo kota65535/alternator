@@ -29,26 +29,24 @@ func NewParser(reader io.Reader) *Parser {
 	for _, v := range Literals {
 		tokens = append(tokens, v)
 	}
+
+	// Keywords that contain "NOT" token can lead to fail parse error in column options for example:
+	//
+	//   { [NOT] NULL | CHECK(...) [NOT] ENFORCED } ...
+	//
+	// And assume the following statement:
+	//
+	//   CHECK(...) NOT NULL
+	//
+	// In this case, shift takes precedence and ENFORCED token is expected, so NULL token causes parse error.
+	// To prevent this, we treat keyword containing "NOT" (ex: "NOT NULL") as a single token, like "NOT\s+NULL".
+	tokens = append(tokens, lexer.NewRegexpTokenType(NOT_ENFORCED, "NOT\\s+ENFORCED", true, 1))
+
 	for _, v := range Skipped {
 		skippedTokens = append(skippedTokens, lexer.NewRegexpTokenType(-1, v, false, 0))
 	}
 
-	l := lexer.NewLexer(reader,
-		// Token types.
-		// A keyword consists of at least one token.
-		// Keywords that contain "NOT" token can lead to fail parse error in column options for example:
-		//
-		//   { [NOT] NULL | CHECK(...) [NOT] ENFORCED } ...
-		//
-		// And assume the following statement:
-		//
-		//   CHECK(...) NOT NULL
-		//
-		// In this case, shift takes precedence and ENFORCED token is expected, so NULL token causes parse error.
-		// To prevent this, we treat keyword containing "NOT" (ex: "NOT NULL") as a single token, like "NOT\s+NULL".
-		tokens,
-		skippedTokens,
-	)
+	l := lexer.NewLexer(reader, tokens, skippedTokens)
 
 	return &Parser{
 		lexer: l,
