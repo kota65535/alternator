@@ -79,7 +79,7 @@ func NewDatabaseAlterations(from []Schema, to []Schema) DatabaseAlterations {
 				To:   d2,
 				DbOptions: &DatabaseOptionAlterations{
 					From: &d1.DatabaseOptions,
-					To:   &d1.DatabaseOptions,
+					To:   &d2.DatabaseOptions,
 				},
 				Tables:     &alteredTables,
 				Sequential: Sequential{databaseOrder[s]},

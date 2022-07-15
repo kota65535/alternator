@@ -42,7 +42,7 @@ func (r DatabaseOptionAlterations) Diff() []string {
 		old, oldOk := from.Get(k)
 		if curOk {
 			if !oldOk {
-				ret = append(ret, fmt.Sprintf("+ %s = %s\t", k, cur))
+				ret = append(ret, fmt.Sprintf("+ %s = %s", k, cur))
 			} else if cur != old {
 				ret = append(ret, fmt.Sprintf("~ %s = %s\t-> %s = %s", k, old, k, cur))
 			}

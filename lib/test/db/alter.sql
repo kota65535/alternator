@@ -1,3 +1,4 @@
+ALTER DATABASE `db2` DEFAULT COLLATE = utf8mb4_bin;
 ALTER TABLE `db2`.`t22` ADD COLUMN `varchar1` varchar(10) AFTER `int2`;
 ALTER TABLE `db2`.`t21` RENAME TO `db2`.`t23`;
 ALTER TABLE `db2`.`t22` ADD FOREIGN KEY (`varchar1`) REFERENCES `t23` (`varchar1`);
