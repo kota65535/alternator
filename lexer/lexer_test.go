@@ -8,10 +8,11 @@ import (
 )
 
 var Skipped = []TokenType{
-	NewRegexpTokenType(-1, "\\s", false, 0),
-	NewRegexpTokenType(-1, "#.*\n", false, 0),
-	NewRegexpTokenType(-1, "--.*\n", false, 0),
-	NewRegexpTokenType(-1, "/\\*.*\\*/\n", false, 0),
+	NewRegexpTokenType(-1, `\s`, false, 0),
+	NewRegexpTokenType(-1, `#.*\n`, false, 0),
+	NewRegexpTokenType(-1, `/\*[^!].*?\*/`, false, 0),
+	NewRegexpTokenType(-1, `/\*!\d{5}`, false, 0),
+	NewRegexpTokenType(-1, `\*/`, false, 0),
 }
 
 func TestSimpleTokenType(t *testing.T) {
@@ -61,4 +62,41 @@ func TestRegexTokenType(t *testing.T) {
 	assert.Equal(t, 3, int(t3.Type.GetID()))
 	assert.Equal(t, "MATCH FULL", t3.Literal)
 	assert.Equal(t, "FULL", t3.Submatches[0])
+}
+
+func TestSkippedTokenType(t *testing.T) {
+
+	schema := "CREATE /* comment */ table `t1` /*!40100 (`id`) */"
+
+	l := NewLexer(strings.NewReader(schema),
+		[]TokenType{
+			NewSimpleTokenType(1, "CREATE", true, 1),
+			NewSimpleTokenType(2, "TABLE", true, 1),
+			NewSimpleTokenType(3, "(", true, 1),
+			NewSimpleTokenType(4, ")", true, 1),
+			NewRegexpTokenType(5, "`[a-zA-Z0-9]+`", true, 2),
+		},
+		Skipped,
+	)
+
+	t1, err := l.Scan()
+	t2, err := l.Scan()
+	t3, err := l.Scan()
+	t4, err := l.Scan()
+	t5, err := l.Scan()
+	t6, err := l.Scan()
+
+	require.NoError(t, err)
+	assert.Equal(t, 1, int(t1.Type.GetID()))
+	assert.Equal(t, "CREATE", t1.Literal)
+	assert.Equal(t, 2, int(t2.Type.GetID()))
+	assert.Equal(t, "TABLE", t2.Literal)
+	assert.Equal(t, 5, int(t3.Type.GetID()))
+	assert.Equal(t, "`t1`", t3.Literal)
+	assert.Equal(t, 3, int(t4.Type.GetID()))
+	assert.Equal(t, "(", t4.Literal)
+	assert.Equal(t, 5, int(t5.Type.GetID()))
+	assert.Equal(t, "`id`", t5.Literal)
+	assert.Equal(t, 4, int(t6.Type.GetID()))
+	assert.Equal(t, ")", t6.Literal)
 }

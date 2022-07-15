@@ -1,6 +1,7 @@
 package lexer
 
 import (
+	"github.com/sirupsen/logrus"
 	"io"
 	"sort"
 	"strings"
@@ -128,6 +129,7 @@ func (l *Lexer) skipTokens() {
 		skipped := false
 		for _, t := range l.SkippedTokenTypes {
 			if tok := t.FindToken(l.buf, l.nextPos); tok != nil {
+				logrus.Debugf("skip %s", tok.Literal)
 				l.consumeBuffer(tok)
 				skipped = true
 			}

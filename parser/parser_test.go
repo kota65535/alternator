@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
@@ -9,6 +10,8 @@ import (
 )
 
 func TestCreateDb(t *testing.T) {
+
+	logrus.SetLevel(logrus.DebugLevel)
 
 	f, err := os.Open("test/db/input.sql")
 	require.NoError(t, err)
@@ -35,8 +38,8 @@ func TestCreateDb(t *testing.T) {
 			DbName:      "db3",
 			DatabaseOptions: DatabaseOptions{
 				DefaultCharset:    "utf8mb4",
-				DefaultCollate:    "utf8mb4_bin",
-				DefaultEncryption: "'Y'",
+				DefaultCollate:    "utf8mb4_unicode_ci",
+				DefaultEncryption: "'N'",
 			},
 		},
 	}, r)

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/kota65535/alternator/lexer"
+	"github.com/sirupsen/logrus"
 	"io"
 	"os"
 	"strings"
@@ -79,7 +80,7 @@ func (p *Parser) Lex(lval *yySymType) int {
 
 	p.lastToken = token
 
-	fmt.Fprintf(os.Stderr, "Token '%s' as %s\n", token.Literal, token.Type.GetID())
+	logrus.Debugf("Token '%s' as %s\n", token.Literal, token.Type.GetID())
 
 	return int(token.Type.GetID())
 }
