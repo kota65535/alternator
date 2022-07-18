@@ -1,28 +1,40 @@
   CREATE DATABASE `db1`;
-  CREATE TABLE `db1`.`t11`
-  (
-      `int1`     int         NOT NULL,
-      `varchar1` varchar(10),
-      PRIMARY KEY (`int1`)
-  );
-  CREATE DATABASE `db2`
-+     DEFAULT COLLATE = utf8mb4_bin;
-  CREATE TABLE `db2`.`t22`
-  (
-      `int1`     int         NOT NULL,
-      `int2`     int,
-+     `varchar1` varchar(10),
-      PRIMARY KEY (`int1`),
-      FOREIGN KEY (`int2`) REFERENCES `t23` (`int1`),
-+     FOREIGN KEY (`varchar1`) REFERENCES `t23` (`varchar1`)
-  );
-~ CREATE TABLE `db2`.`t21` -> CREATE TABLE `db2`.`t23`
+~ CREATE TABLE `db1`.`t11` -> CREATE TABLE `db1`.`t13`
   (
       `int1`     int         NOT NULL,
       `varchar1` varchar(10),
       PRIMARY KEY (`int1`),
       UNIQUE KEY (`varchar1`)
   );
+  CREATE TABLE `db1`.`t12`
+  (
+      `int1`     int         NOT NULL,
+      `int2`     int,
++     `varchar1` varchar(10),
+      PRIMARY KEY (`int1`),
+      FOREIGN KEY (`int2`) REFERENCES `t13` (`int1`),
++     FOREIGN KEY (`varchar1`) REFERENCES `t13` (`varchar1`)
+  );
+  CREATE DATABASE `db2`
+~     DEFAULT COLLATE = utf8mb4_0900_ai_ci	-> DEFAULT COLLATE = utf8mb4_bin;
+  CREATE TABLE `db2`.`t21`
+  (
+      `int1`     int         NOT NULL,
+~     `varchar1` varchar(10)          -> `varchar1` varchar(10),
+      PRIMARY KEY (`int1`),
+      UNIQUE KEY (`varchar1`)
+  )
+~     DEFAULT COLLATE = utf8mb4_0900_ai_ci -> DEFAULT COLLATE = utf8mb4_bin;
+  CREATE TABLE `db2`.`t22`
+  (
+      `int1`     int         NOT NULL,
+      `int2`     int,
++     `varchar1` varchar(10),
+      PRIMARY KEY (`int1`),
+      FOREIGN KEY (`int2`) REFERENCES `t21` (`int1`),
++     FOREIGN KEY (`varchar1`) REFERENCES `t21` (`varchar1`)
+  )
+~     DEFAULT COLLATE = utf8mb4_0900_ai_ci -> DEFAULT COLLATE = utf8mb4_bin;
 + CREATE DATABASE `db3`
 +     DEFAULT CHARACTER SET = utf8mb4
 +     DEFAULT COLLATE = utf8mb4_bin;

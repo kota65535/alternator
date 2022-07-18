@@ -585,7 +585,7 @@ CreateDatabaseStatement:
 		$$ = CreateDatabaseStatement{
         	IfNotExists: $3,
 			DbName: $4,
-			DatabaseOptions: $5.(DatabaseOptions),
+			DatabaseOptions: $5.(*DatabaseOptions),
 		}
 	}
 
@@ -597,7 +597,7 @@ DbName:
 
 DatabaseOptions:
 	{
-		$$ = DatabaseOptions{}
+		$$ = &DatabaseOptions{}
 	}
 |	DatabaseOption
 	{
@@ -606,27 +606,27 @@ DatabaseOptions:
 |	DatabaseOptions DatabaseOption
 	{
 		// TODO: error handling
-		merged := $1.(DatabaseOptions)
-		mergo.Merge(&merged, $2.(DatabaseOptions))
+		merged := $1.(*DatabaseOptions)
+		mergo.Merge(merged, $2.(*DatabaseOptions))
 		$$ = merged
 	}
 
 DatabaseOption:
 	DefaultCharset
 	{
-		$$ = DatabaseOptions{
+		$$ = &DatabaseOptions{
 			DefaultCharset: $1,
 		}
 	}
 |	DefaultCollate
 	{
-		$$ = DatabaseOptions{
+		$$ = &DatabaseOptions{
 			DefaultCollate: $1,
 		}
 	}
 |	DefaultEncryption
 	{
-		$$ = DatabaseOptions{
+		$$ = &DatabaseOptions{
 			DefaultEncryption: $1,
 		}
 	}

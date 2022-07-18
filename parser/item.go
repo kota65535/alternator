@@ -11,8 +11,27 @@ type DatabaseOptions struct {
 	DefaultCharset    string
 	DefaultCollate    string
 	DefaultEncryption string
+
+	GlobalConfig *GlobalConfig
 }
 
+func (r DatabaseOptions) ActualDefaultCharset() string {
+	if r.DefaultCharset != "" {
+		return r.DefaultCharset
+	} else {
+		return r.GlobalConfig.CharacterSetServer
+	}
+}
+
+func (r DatabaseOptions) ActualDefaultCollate() string {
+	if r.DefaultCollate != "" {
+		return r.DefaultCollate
+	} else if r.DefaultCharset != "" {
+		return r.GlobalConfig.CharsetToCollation[r.DefaultCharset]
+	} else {
+		return r.GlobalConfig.CollationServer
+	}
+}
 func (r DatabaseOptions) String() string {
 	return strings.Join(r.Strings(), " ")
 }
@@ -50,10 +69,18 @@ type ColumnDefinition struct {
 }
 
 func (r ColumnDefinition) Equals(a ColumnDefinition) bool {
-	r.ColumnOptions.GeneratedAs = strings.ReplaceAll(r.ColumnOptions.GeneratedAs, "`", "")
-	r.ColumnOptions.GeneratedAs = strings.ReplaceAll(r.ColumnOptions.GeneratedAs, " ", "")
-	a.ColumnOptions.GeneratedAs = strings.ReplaceAll(a.ColumnOptions.GeneratedAs, "`", "")
-	a.ColumnOptions.GeneratedAs = strings.ReplaceAll(a.ColumnOptions.GeneratedAs, " ", "")
+	r2, ok1 := r.DataType.(StringType)
+	a2, ok2 := a.DataType.(StringType)
+	if ok1 && ok2 {
+		e := r2.ActualCharset() == a2.ActualCharset() && r2.ActualCollate() == a2.ActualCollate()
+		r2.DefaultCharset = ""
+		r2.DefaultCollation = ""
+		a2.DefaultCharset = ""
+		a2.DefaultCollation = ""
+		r.DataType = r2
+		a.DataType = a2
+		return reflect.DeepEqual(r, a) && e
+	}
 	return reflect.DeepEqual(r, a)
 }
 
@@ -219,10 +246,28 @@ func (t DateAndTimeType) String() string {
 }
 
 type StringType struct {
-	Name      string
-	FieldLen  string
-	Charset   string
-	Collation string
+	Name             string
+	FieldLen         string
+	Charset          string
+	Collation        string
+	DefaultCharset   string
+	DefaultCollation string
+}
+
+func (r StringType) ActualCharset() string {
+	if r.Charset != "" {
+		return r.Charset
+	} else {
+		return r.DefaultCharset
+	}
+}
+
+func (r StringType) ActualCollate() string {
+	if r.Collation != "" {
+		return r.Collation
+	} else {
+		return r.DefaultCollation
+	}
 }
 
 func (t StringType) String() string {
@@ -526,6 +571,23 @@ type TableOptions struct {
 	TableSpace               string
 	TableSpaceStorage        string
 	Union                    []string
+	DatabaseOptions          *DatabaseOptions
+}
+
+func (r TableOptions) ActualDefaultCharset() string {
+	if r.DefaultCharset != "" {
+		return r.DefaultCharset
+	} else {
+		return r.DatabaseOptions.ActualDefaultCharset()
+	}
+}
+
+func (r TableOptions) ActualDefaultCollate() string {
+	if r.DefaultCollate != "" {
+		return r.DefaultCollate
+	} else {
+		return r.DatabaseOptions.ActualDefaultCollate()
+	}
 }
 
 func (r TableOptions) Map() *linkedhashmap.Map {

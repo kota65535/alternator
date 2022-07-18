@@ -20,6 +20,11 @@ func (r *DatabaseOptionAlterations) Alterations() []Alteration {
 func (r DatabaseOptionAlterations) Statements() []string {
 	from := r.From.Map()
 	to := r.To.Map()
+	from.Put("DEFAULT CHARACTER SET", r.From.ActualDefaultCharset())
+	from.Put("DEFAULT COLLATE", r.From.ActualDefaultCollate())
+	to.Put("DEFAULT CHARACTER SET", r.To.ActualDefaultCharset())
+	to.Put("DEFAULT COLLATE", r.To.ActualDefaultCollate())
+
 	keys := to.Keys()
 	ret := []string{}
 	for _, k := range keys {
@@ -35,6 +40,11 @@ func (r DatabaseOptionAlterations) Statements() []string {
 func (r DatabaseOptionAlterations) Diff() []string {
 	from := r.From.Map()
 	to := r.To.Map()
+	from.Put("DEFAULT CHARACTER SET", r.From.ActualDefaultCharset())
+	from.Put("DEFAULT COLLATE", r.From.ActualDefaultCollate())
+	to.Put("DEFAULT CHARACTER SET", r.To.ActualDefaultCharset())
+	to.Put("DEFAULT COLLATE", r.To.ActualDefaultCollate())
+
 	keys := to.Keys()
 	ret := []string{}
 	for _, k := range keys {
@@ -42,7 +52,7 @@ func (r DatabaseOptionAlterations) Diff() []string {
 		old, oldOk := from.Get(k)
 		if curOk {
 			if !oldOk {
-				ret = append(ret, fmt.Sprintf("+ %s = %s", k, cur))
+				ret = append(ret, fmt.Sprintf("+ %s = %s\t", k, cur))
 			} else if cur != old {
 				ret = append(ret, fmt.Sprintf("~ %s = %s\t-> %s = %s", k, old, k, cur))
 			}

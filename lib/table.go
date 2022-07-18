@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/emirpasic/gods/sets/linkedhashset"
 	"github.com/kota65535/alternator/parser"
+	"github.com/sirupsen/logrus"
 	"strings"
 )
 
@@ -21,16 +22,25 @@ func NewTableAlterations(from []*parser.CreateTableStatement, to []*parser.Creat
 
 	fromMap := map[string]*parser.CreateTableStatement{}
 	fromSet := linkedhashset.New()
+	fromNames := []string{}
 	for _, t := range from {
 		fromMap[t.TableName] = t
 		fromSet.Add(t.TableName)
+		fromNames = append(fromNames, t.TableName)
 	}
+
+	logrus.Debugf("from tables: %s", fromNames)
+
 	toMap := map[string]*parser.CreateTableStatement{}
 	toSet := linkedhashset.New()
+	toNames := []string{}
 	for _, t := range to {
 		toMap[t.TableName] = t
 		toSet.Add(t.TableName)
+		toNames = append(toNames, t.TableName)
 	}
+
+	logrus.Debugf("to tables: %s", toNames)
 
 	tableOrder := getTableOrder(from, to)
 	dependencies := getTableDependencies(from)
@@ -60,7 +70,7 @@ func NewTableAlterations(from []*parser.CreateTableStatement, to []*parser.Creat
 
 	renamedFrom := map[string]bool{}
 	renamedTo := map[string]bool{}
-	// If two tables are equal except their names, they have been renamed
+	// If two tables are equal except their names, assume they have been renamed
 	for _, a := range addedOrRenamed {
 		for _, d := range droppedOrRenamed {
 			t1 := fromMap[d.Id()]
@@ -147,6 +157,7 @@ func NewTableAlterations(from []*parser.CreateTableStatement, to []*parser.Creat
 				t2.ForeignKeys.HandleRefColumnDrop(c1, t1.To.TableName, c1.This.ColumnName)
 			}
 		}
+		// handle column rename referred by foreign keys
 		for _, c1 := range t1.Columns.Renamed {
 			for _, t2 := range modified {
 				t2.ForeignKeys.HandleRefColumnRename(t1.To.TableName, c1.From.ColumnName, c1.To.ColumnName)
@@ -392,6 +403,8 @@ type ModifiedTable struct {
 
 func (r ModifiedTable) Alterations() []Alteration {
 	alterations := []Alteration{}
+	// table option should be changed at first because of default charset / collation
+	alterations = append(alterations, r.TableOptions.Alterations()...)
 	alterations = append(alterations, r.Columns.Alterations()...)
 	alterations = append(alterations, r.PrimaryKeys.Alterations()...)
 	alterations = append(alterations, r.UniqueKeys.Alterations()...)
@@ -399,7 +412,6 @@ func (r ModifiedTable) Alterations() []Alteration {
 	alterations = append(alterations, r.FullTextIndexes.Alterations()...)
 	alterations = append(alterations, r.ForeignKeys.Alterations()...)
 	alterations = append(alterations, r.CheckConstraints.Alterations()...)
-	alterations = append(alterations, r.TableOptions.Alterations()...)
 
 	for i, a := range alterations {
 		a.SetPrefix(fmt.Sprintf("ALTER TABLE `%s`.`%s` ", r.To.DbName, r.To.TableName))

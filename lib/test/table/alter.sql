@@ -1,0 +1,17 @@
+ALTER TABLE `db1`.`t11` MODIFY COLUMN `varchar2` varchar(10) CHARACTER SET sjis COLLATE sjis_japanese_ci;
+ALTER TABLE `db1`.`t11` MODIFY COLUMN `varchar3` varchar(10) CHARACTER SET utf16 COLLATE utf16_bin;
+ALTER TABLE `db1`.`t11` MODIFY COLUMN `varchar4` varchar(10);
+ALTER DATABASE `db2` DEFAULT COLLATE = utf8mb4_bin;
+ALTER TABLE `db2`.`t21` DEFAULT COLLATE = utf8mb4_bin;
+ALTER TABLE `db2`.`t21` MODIFY COLUMN `varchar1` varchar(10);
+ALTER TABLE `db2`.`t21` MODIFY COLUMN `varchar2` varchar(10) CHARACTER SET sjis COLLATE sjis_japanese_ci;
+ALTER TABLE `db2`.`t21` MODIFY COLUMN `varchar3` varchar(10) CHARACTER SET utf16 COLLATE utf16_bin;
+ALTER TABLE `db2`.`t21` MODIFY COLUMN `varchar4` varchar(10);
+ALTER DATABASE `db3` DEFAULT CHARACTER SET = utf8mb4;
+ALTER DATABASE `db3` DEFAULT COLLATE = utf8mb4_bin;
+ALTER TABLE `db3`.`t31` DEFAULT CHARACTER SET = utf8mb4;
+ALTER TABLE `db3`.`t31` DEFAULT COLLATE = utf8mb4_bin;
+ALTER TABLE `db3`.`t31` MODIFY COLUMN `varchar1` varchar(10);
+ALTER TABLE `db3`.`t31` MODIFY COLUMN `varchar2` varchar(10) CHARACTER SET sjis COLLATE sjis_japanese_ci;
+ALTER TABLE `db3`.`t31` MODIFY COLUMN `varchar3` varchar(10) CHARACTER SET utf16 COLLATE utf16_bin;
+ALTER TABLE `db3`.`t31` MODIFY COLUMN `varchar4` varchar(10);

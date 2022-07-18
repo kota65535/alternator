@@ -31,6 +31,11 @@ func (r *TableOptionAlterations) Alterations() []Alteration {
 func (r TableOptionAlterations) Statements() []string {
 	from := r.From.Map()
 	to := r.To.Map()
+	from.Put("DEFAULT CHARACTER SET", r.From.ActualDefaultCharset())
+	from.Put("DEFAULT COLLATE", r.From.ActualDefaultCollate())
+	to.Put("DEFAULT CHARACTER SET", r.To.ActualDefaultCharset())
+	to.Put("DEFAULT COLLATE", r.To.ActualDefaultCollate())
+
 	keys := to.Keys()
 	ret := []string{}
 	for _, k := range keys {
@@ -46,6 +51,11 @@ func (r TableOptionAlterations) Statements() []string {
 func (r TableOptionAlterations) Diff() []string {
 	from := r.From.Map()
 	to := r.To.Map()
+	from.Put("DEFAULT CHARACTER SET", r.From.ActualDefaultCharset())
+	from.Put("DEFAULT COLLATE", r.From.ActualDefaultCollate())
+	to.Put("DEFAULT CHARACTER SET", r.To.ActualDefaultCharset())
+	to.Put("DEFAULT COLLATE", r.To.ActualDefaultCollate())
+
 	keys := to.Keys()
 	ret := []string{}
 	for _, k := range keys {

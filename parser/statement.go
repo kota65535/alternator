@@ -15,7 +15,7 @@ type Statement interface {
 type CreateDatabaseStatement struct {
 	IfNotExists     bool
 	DbName          string
-	DatabaseOptions DatabaseOptions
+	DatabaseOptions *DatabaseOptions
 }
 
 func (r CreateDatabaseStatement) String() string {

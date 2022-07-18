@@ -2,10 +2,10 @@
 
 build: build-darwin build-linux
 
-build-darwin: test
+build-darwin:
 	env GOOS=darwin GOARCH=amd64 go build -o alternator-darwin -ldflags '-s -w -X github.com/kota65535/alternator/cmd.Version=0.0.0' main.go
 
-build-linux: test
+build-linux:
 	env GOOS=linux GOARCH=amd64 go build -o alternator-linux -ldflags '-s -w -X github.com/kota65535/alternator/cmd.Version=0.0.0' main.go
 
 test: yacc compose-up

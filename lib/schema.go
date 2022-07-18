@@ -2,10 +2,8 @@ package lib
 
 import (
 	"github.com/emirpasic/gods/sets/hashset"
-	"github.com/emirpasic/gods/stacks/arraystack"
 	"github.com/kota65535/alternator/parser"
 	"github.com/spf13/cobra"
-	"regexp"
 	"sort"
 	"strings"
 )
@@ -35,79 +33,15 @@ func (r Schema) String() string {
 	return strings.Join(statements, "\n")
 }
 
-func NewSchemas(str string) []Schema {
+func NewSchemas(str string, config *parser.GlobalConfig) []Schema {
 
-	stripped := stripConditionalComments(str)
-
-	p := parser.NewParser(strings.NewReader(stripped))
+	p := parser.NewParser(strings.NewReader(str))
 	statements, err := p.Parse()
 	cobra.CheckErr(err)
 
-	schema := normalizeStatements(statements)
-
-	// Sort table name by their dependencies (foreign keys)
-	//for _, s := range schema {
-	//	s.Tables = NewDag(s.Tables).Sort()
-	//}
+	schema := normalizeStatements(statements, config)
 
 	return schema
-}
-
-func stripOutermostParentheses(str string) string {
-	stack := arraystack.New()
-	pairIdx := map[int]int{}
-	for i := 0; i < len(str); i++ {
-		switch str[i] {
-		case '(':
-			stack.Push(i)
-		case ')':
-			j, ok := stack.Pop()
-			if !ok {
-				return str
-			}
-			pairIdx[j.(int)] = i
-		}
-	}
-	nStrip := 0
-	for i := 0; i < len(str); i++ {
-		if pairIdx[i] != len(str)-(i+1) {
-			break
-		}
-		nStrip += 1
-	}
-
-	return str[nStrip : len(str)-nStrip]
-}
-
-func stripConditionalComments(str string) string {
-	startPattern := regexp.MustCompile("/\\*!\\d*")
-	endPattern := regexp.MustCompile("\\*/")
-
-	started := false
-	pos := 0
-	ret := ""
-	for pos < len(str) {
-		if started {
-			loc := endPattern.FindStringIndex(str[pos:])
-			if loc == nil {
-				ret += str[pos:]
-				break
-			}
-			ret += str[pos : pos+loc[0]]
-			pos += loc[1]
-			started = false
-		} else {
-			loc := startPattern.FindStringIndex(str[pos:])
-			if loc == nil {
-				ret += str[pos:]
-				break
-			}
-			ret += str[pos : pos+loc[0]]
-			pos += loc[1]
-			started = true
-		}
-	}
-	return ret
 }
 
 func normalizeDataType(t interface{}) interface{} {
@@ -130,10 +64,9 @@ func normalizeDataType(t interface{}) interface{} {
 	return t
 }
 
-func normalizeStatements(statements []parser.Statement) []Schema {
+func normalizeStatements(statements []parser.Statement, config *parser.GlobalConfig) []Schema {
 	currentDbName := ""
-	defaultCharsets := map[string]string{}
-	defaultCollates := map[string]string{}
+	databases := map[string]*parser.CreateDatabaseStatement{}
 	schemas := map[string]*Schema{}
 	for i, _ := range statements {
 		s := statements[i]
@@ -145,29 +78,19 @@ func normalizeStatements(statements []parser.Statement) []Schema {
 				Database: &cds,
 				Tables:   []*parser.CreateTableStatement{},
 			}
-			defaultCharsets[cds.DbName] = cds.DatabaseOptions.DefaultCharset
-			defaultCollates[cds.DbName] = cds.DatabaseOptions.DefaultCollate
+
+			cds.DatabaseOptions.GlobalConfig = config
+			databases[cds.DbName] = &cds
 		}
 		if cts, ok := s.(parser.CreateTableStatement); ok {
 			// Current DB name set by USE statement
 			if cts.DbName == "" {
 				cts.DbName = currentDbName
 			}
+			currentDb := databases[currentDbName]
 
-			defaultCharset := defaultCharsets[currentDbName]
-			defaultCollate := defaultCollates[currentDbName]
+			cts.TableOptions.DatabaseOptions = currentDb.DatabaseOptions
 
-			// Unset default charset/collation if they match database's default
-			if cts.TableOptions.DefaultCharset == defaultCharset {
-				cts.TableOptions.DefaultCharset = ""
-			} else {
-				defaultCharset = cts.TableOptions.DefaultCharset
-			}
-			if cts.TableOptions.DefaultCollate == defaultCollate {
-				cts.TableOptions.DefaultCollate = ""
-			} else {
-				defaultCollate = cts.TableOptions.DefaultCollate
-			}
 			// Unset if engine is InnoDB, which is default
 			if cts.TableOptions.Engine == "InnoDB" {
 				cts.TableOptions.Engine = ""
@@ -189,14 +112,9 @@ func normalizeStatements(statements []parser.Statement) []Schema {
 
 				v.DataType = normalizeDataType(v.DataType)
 
-				// Unset charset/collation if equal to the table's default
 				if dt, ok := v.DataType.(parser.StringType); ok {
-					if dt.Charset == defaultCharset {
-						dt.Charset = ""
-					}
-					if dt.Collation == defaultCollate {
-						dt.Collation = ""
-					}
+					dt.DefaultCharset = cts.TableOptions.ActualDefaultCharset()
+					dt.DefaultCollation = cts.TableOptions.ActualDefaultCollate()
 					v.DataType = dt
 				}
 
@@ -342,10 +260,6 @@ func normalizeStatements(statements []parser.Statement) []Schema {
 				if Contains([]string{"RESTRICT", "NO ACTION"}, v.ReferenceDefinition.ReferenceOptions.OnUpdate) {
 					v.ReferenceDefinition.ReferenceOptions.OnUpdate = ""
 				}
-			}
-
-			for _, c := range checks {
-				c.Check = stripOutermostParentheses(c.Check)
 			}
 
 			for _, c := range columns {
