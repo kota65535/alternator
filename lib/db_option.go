@@ -54,24 +54,9 @@ func (r DatabaseOptionAlterations) Diff() []string {
 			} else {
 				ret = append(ret, fmt.Sprintf("  %s = %s", k, cur))
 			}
-		} else {
-			if k == "DEFAULT CHARACTER SET" {
-				cur = r.To.ActualDefaultCharset()
-				if !oldOk {
-					old = r.From.ActualDefaultCharset()
-				}
-			}
-			if k == "DEFAULT COLLATE" {
-				cur = r.To.ActualDefaultCollate()
-				if !oldOk {
-					old = r.From.ActualDefaultCollate()
-				}
-			}
-			if cur != old {
-				ret = append(ret, fmt.Sprintf("~ %s = %s\t-> %s = %s", k, old, k, cur))
-			}
 		}
 	}
+	ret = parser.Align(ret)
 	return ret
 }
 
