@@ -110,7 +110,7 @@ func NewTableAlterations(from []*parser.CreateTableStatement, to []*parser.Creat
 		if elements.Equivalent() {
 			// create ForeignKeyAlterations instance in case of column modification foreign key is referencing
 			retained = append(retained, &RetainedTable{
-				This:        t1,
+				This:        t2,
 				ForeignKeys: elements.ForeignKeys,
 				Sequential:  Sequential{tableOrder[s]},
 			})

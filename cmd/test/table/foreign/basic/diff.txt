@@ -4,7 +4,7 @@
       `int1` int NOT NULL,
       `int2` int,
       PRIMARY KEY (`int1`),
-      UNIQUE KEY `int2` (`int2`)
+      UNIQUE KEY (`int2`)
   );
   CREATE TABLE `db1`.`t2`
   (

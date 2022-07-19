@@ -2,6 +2,7 @@ package lib
 
 import (
 	"github.com/emirpasic/gods/sets/hashset"
+	"github.com/emirpasic/gods/stacks/arraystack"
 	"github.com/kota65535/alternator/parser"
 	"github.com/spf13/cobra"
 	"sort"
@@ -268,6 +269,10 @@ func normalizeStatements(statements []parser.Statement, config *parser.GlobalCon
 				}
 			}
 
+			for _, c := range checks {
+				c.Check = stripOutermostParentheses(c.Check)
+			}
+
 			for _, c := range columns {
 				createDefinitions = append(createDefinitions, c)
 			}
@@ -309,4 +314,30 @@ func normalizeStatements(statements []parser.Statement, config *parser.GlobalCon
 	}
 
 	return ret
+}
+
+func stripOutermostParentheses(str string) string {
+	stack := arraystack.New()
+	pairIdx := map[int]int{}
+	for i := 0; i < len(str); i++ {
+		switch str[i] {
+		case '(':
+			stack.Push(i)
+		case ')':
+			j, ok := stack.Pop()
+			if !ok {
+				return str
+			}
+			pairIdx[j.(int)] = i
+		}
+	}
+	nStrip := 0
+	for i := 0; i < len(str); i++ {
+		if pairIdx[i] != len(str)-(i+1) {
+			break
+		}
+		nStrip += 1
+	}
+
+	return str[nStrip : len(str)-nStrip]
 }

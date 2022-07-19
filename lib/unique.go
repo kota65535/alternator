@@ -65,7 +65,7 @@ func NewUniqueAlterations(
 		t2 := toMap[s]
 		if uniqueDefsEqual(*t1, *t2) {
 			retained = append(retained, &RetainedUniqueKey{
-				This:       t1,
+				This:       t2,
 				Sequential: Sequential{uniqueKeyOrder[s]},
 			})
 		} else if t2.ConstraintName != "" && t1.ConstraintName != t2.ConstraintName {

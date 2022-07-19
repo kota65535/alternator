@@ -61,7 +61,8 @@ func NewForeignKeyAlterations(
 		t2 := toMap[s]
 		if foreignKeyDefsEqual(*t1, *t2) {
 			retained = append(retained, &RetainedForeignKey{
-				This:       t1,
+				From:       t1,
+				To:         t2,
 				Sequential: Sequential{foreignKeyOrder[s]},
 			})
 		} else {
@@ -153,7 +154,8 @@ func (r *ForeignKeyAlterations) HandleTableRename(alt Alteration, fromName strin
 			if d.This.ReferenceDefinition.TableName == a.This.ReferenceDefinition.TableName {
 				if foreignKeyDefsEqual(*d.This, *a.This) {
 					r.Retained = append(r.Retained, &RetainedForeignKey{
-						This:       a.This,
+						From:       d.This,
+						To:         a.This,
 						Sequential: a.Sequential,
 						Dependent:  a.Dependent,
 					})
@@ -216,7 +218,8 @@ func (r *ForeignKeyAlterations) HandleRefColumnRename(tableName string, fromName
 				d.This.ReferenceDefinition.KeyPartList = keyPartReplace(d.This.ReferenceDefinition.KeyPartList, fromName, toName)
 				if foreignKeyDefsEqual(*d.This, *a.This) {
 					r.Retained = append(r.Retained, &RetainedForeignKey{
-						This:       a.This,
+						From:       d.This,
+						To:         a.This,
 						Sequential: a.Sequential,
 						Dependent:  a.Dependent,
 					})
@@ -235,10 +238,10 @@ func (r *ForeignKeyAlterations) HandleRefColumnModify(modify Alteration, tableNa
 	removed := map[Alteration]bool{}
 	// Retained foreign keys must be dropped before the column modification and added again after that
 	for _, f := range r.Retained {
-		if f.This.ReferenceDefinition.TableName == tableName && keyPartContains(f.This.ReferenceDefinition.KeyPartList, columnName) {
+		if f.To.ReferenceDefinition.TableName == tableName && keyPartContains(f.To.ReferenceDefinition.KeyPartList, columnName) {
 			// Drop the FK before column modification
 			droppedFK := &DroppedForeignKey{
-				This:       f.This,
+				This:       f.From,
 				Sequential: f.Sequential,
 				Dependent:  f.Dependent,
 			}
@@ -247,7 +250,7 @@ func (r *ForeignKeyAlterations) HandleRefColumnModify(modify Alteration, tableNa
 
 			// Add the FK after column modification
 			addedFK := &AddedForeignKey{
-				This:       f.This,
+				This:       f.To,
 				Sequential: f.Sequential,
 				Dependent:  f.Dependent,
 			}
@@ -318,7 +321,8 @@ func (r DroppedForeignKey) Id() string {
 }
 
 type RetainedForeignKey struct {
-	This *parser.ForeignKeyDefinition
+	From *parser.ForeignKeyDefinition
+	To   *parser.ForeignKeyDefinition
 	Sequential
 	Dependent
 	Prefixable
@@ -329,11 +333,11 @@ func (r RetainedForeignKey) Statements() []string {
 }
 
 func (r RetainedForeignKey) Diff() []string {
-	return []string{fmt.Sprintf("  %s", r.This.String())}
+	return []string{fmt.Sprintf("  %s", r.To.String())}
 }
 
 func (r RetainedForeignKey) Id() string {
-	return keyPartId(r.This.KeyPartList)
+	return keyPartId(r.To.KeyPartList)
 }
 
 func getForeignKeyOrder(from []*parser.ForeignKeyDefinition, to []*parser.ForeignKeyDefinition, columnOrder map[string]int) map[string]int {

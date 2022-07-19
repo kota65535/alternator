@@ -8,8 +8,8 @@
       `var5` varchar(16),
       `var6` varchar(16),
       FULLTEXT INDEX (`var1`),
+~     FULLTEXT INDEX `var2` (`var2`) -> FULLTEXT INDEX (`var2`) INVISIBLE,
 -     FULLTEXT INDEX `idx1` (`var4`),
 +     FULLTEXT INDEX `idx1` (`var5`),
-~     FULLTEXT INDEX `idx2` (`var6`)         -> FULLTEXT INDEX `idx3` (`var6`),
-~     FULLTEXT INDEX `var2` (`var2`, `var3`) -> FULLTEXT INDEX (`var2`, `var3`) INVISIBLE
+~     FULLTEXT INDEX `idx2` (`var6`) -> FULLTEXT INDEX `idx3` (`var6`)
   );

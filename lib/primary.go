@@ -63,7 +63,7 @@ func NewPrimaryKeyAlterations(
 		t2 := toMap[s]
 		if primaryKeyDefsEqual(*t1, *t2) {
 			retained = append(retained, &RetainedPrimaryKey{
-				This:       t1,
+				This:       t2,
 				Sequential: Sequential{primaryKeyOrder[s]},
 			})
 		} else {

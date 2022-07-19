@@ -6,7 +6,7 @@
       `int3` int,
       `int4` int,
       `int5` int,
-      `var6` varchar(10),
+~     `var6` varchar(10)  -> `var6` varchar(10),
       INDEX (`int1`),
 -     INDEX `idx1` (`int4`),
 +     INDEX `idx1` (`int5`),

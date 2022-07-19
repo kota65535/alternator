@@ -14,7 +14,7 @@
       `int4` int,
       `int5` int,
       `int6` int,
-      CONSTRAINT `t1_ibfk_1` FOREIGN KEY `t1_ibfk_1` (`int10`) REFERENCES `t0` (`int1`),
+      FOREIGN KEY (`int10`) REFERENCES `t0` (`int1`),
 -     CONSTRAINT `t1_ibfk_2` FOREIGN KEY `t1_ibfk_2` (`int20`) REFERENCES `t0` (`int1`),
 +     FOREIGN KEY (`int20`) REFERENCES `t0` (`int2`) ON UPDATE CASCADE,
 -     CONSTRAINT `t1_ibfk_3` FOREIGN KEY `t1_ibfk_3` (`int3`) REFERENCES `t0` (`int1`),

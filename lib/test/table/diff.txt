@@ -11,7 +11,8 @@
       PRIMARY KEY (`int1`)
   );
   CREATE DATABASE `db2`
-~     DEFAULT COLLATE = utf8mb4_0900_ai_ci	-> DEFAULT COLLATE = utf8mb4_bin;
++     DEFAULT CHARACTER SET = utf8mb4
++     DEFAULT COLLATE = utf8mb4_bin;
   CREATE TABLE `db2`.`t21`
   (
       `int1`     int                                                     NOT NULL,
@@ -20,11 +21,10 @@
 ~     `varchar3` varchar(10) CHARACTER SET sjis COLLATE sjis_japanese_ci          -> `varchar3` varchar(10) CHARACTER SET utf16 COLLATE utf16_bin,
 ~     `varchar4` varchar(10) CHARACTER SET sjis COLLATE sjis_japanese_ci          -> `varchar4` varchar(10),
       PRIMARY KEY (`int1`)
-  )
-~     DEFAULT COLLATE = utf8mb4_0900_ai_ci -> DEFAULT COLLATE = utf8mb4_bin;
+  );
   CREATE DATABASE `db3`
-~     DEFAULT CHARACTER SET = utf16	-> DEFAULT CHARACTER SET = utf8mb4
-~     DEFAULT COLLATE = utf16_general_ci	-> DEFAULT COLLATE = utf8mb4_bin;
+~     DEFAULT CHARACTER SET = utf16      -> DEFAULT CHARACTER SET = utf8mb4
+~     DEFAULT COLLATE = utf16_general_ci -> DEFAULT COLLATE = utf8mb4_bin;
   CREATE TABLE `db3`.`t31`
   (
       `int1`     int                                                     NOT NULL,
@@ -33,6 +33,4 @@
 ~     `varchar3` varchar(10) CHARACTER SET sjis COLLATE sjis_japanese_ci          -> `varchar3` varchar(10) CHARACTER SET utf16 COLLATE utf16_bin,
 ~     `varchar4` varchar(10) CHARACTER SET sjis COLLATE sjis_japanese_ci          -> `varchar4` varchar(10),
       PRIMARY KEY (`int1`)
-  )
-~     DEFAULT CHARACTER SET = utf16      -> DEFAULT CHARACTER SET = utf8mb4
-~     DEFAULT COLLATE = utf16_general_ci -> DEFAULT COLLATE = utf8mb4_bin;
+  );

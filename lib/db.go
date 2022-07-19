@@ -69,7 +69,7 @@ func NewDatabaseAlterations(from []Schema, to []Schema) DatabaseAlterations {
 		alteredTables := NewTableAlterations(t1, t2)
 		if databasesEqual(d1, d2) {
 			retained = append(retained, &RetainedDatabase{
-				This:       d1,
+				This:       d2,
 				Tables:     alteredTables,
 				Sequential: Sequential{databaseOrder[s]},
 			})
