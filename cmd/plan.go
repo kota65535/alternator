@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 	"github.com/kota65535/alternator/lib"
+	"github.com/kota65535/alternator/parser"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"io/ioutil"
@@ -51,8 +52,11 @@ func planCmd(local string, remote string) *lib.DatabaseAlterations {
 }
 
 func getAlterations(to string, from string) lib.DatabaseAlterations {
-	toSchemas := readSchemas(to)
-	fromSchemas := fetchSchemas(from)
+	db := connectToDb(from)
+	config := parser.FetchGlobalConfig(db)
+	toSchemas := readSchemas(to, config)
+	fromSchemas := fetchSchemas(from, db, config)
+	defer db.Close()
 
 	logrus.Debug("Showing local file schema")
 	for _, s := range toSchemas {
@@ -66,10 +70,10 @@ func getAlterations(to string, from string) lib.DatabaseAlterations {
 	return lib.NewDatabaseAlterations(fromSchemas, toSchemas)
 }
 
-func readSchemas(filename string) []lib.Schema {
+func readSchemas(filename string, config *parser.GlobalConfig) []lib.Schema {
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
 		cobra.CheckErr(err)
 	}
-	return lib.NewSchemas(string(b))
+	return lib.NewSchemas(string(b), config)
 }

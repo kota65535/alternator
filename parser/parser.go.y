@@ -2582,7 +2582,11 @@ Expressions:
 	}
 
 Expression:
-	Expression AndKwd Expression
+	lp Expression rp
+	{
+		$$ = $2
+	}
+|	Expression AndKwd Expression
 	{
 		$$ = fmt.Sprintf("%s AND %s", $1, $3)
 	}

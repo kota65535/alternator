@@ -1,3 +1,13 @@
+ALTER DATABASE `db1` DEFAULT CHARACTER SET = latin1;
+ALTER DATABASE `db1` DEFAULT COLLATE = latin1_swedish_ci;
+ALTER TABLE `db1`.`t1` DEFAULT CHARACTER SET = latin1;
+ALTER TABLE `db1`.`t1` DEFAULT COLLATE = latin1_swedish_ci;
+ALTER TABLE `db1`.`t1` MODIFY COLUMN `var1` varchar(16);
+ALTER TABLE `db1`.`t1` MODIFY COLUMN `var2` varchar(16);
+ALTER TABLE `db1`.`t1` MODIFY COLUMN `var3` varchar(16);
+ALTER TABLE `db1`.`t1` MODIFY COLUMN `var4` varchar(16);
+ALTER TABLE `db1`.`t1` MODIFY COLUMN `var5` varchar(16);
+ALTER TABLE `db1`.`t1` MODIFY COLUMN `var6` varchar(16);
 ALTER TABLE `db1`.`t1` DROP INDEX `idx1`;
 ALTER TABLE `db1`.`t1` ADD FULLTEXT INDEX `idx1` (`var5`);
 ALTER TABLE `db1`.`t1` RENAME INDEX `idx2` TO `idx3`;

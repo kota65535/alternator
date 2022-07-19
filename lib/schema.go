@@ -115,6 +115,12 @@ func normalizeStatements(statements []parser.Statement, config *parser.GlobalCon
 				if dt, ok := v.DataType.(parser.StringType); ok {
 					dt.DefaultCharset = cts.TableOptions.ActualDefaultCharset()
 					dt.DefaultCollation = cts.TableOptions.ActualDefaultCollate()
+					if dt.Charset == dt.DefaultCharset {
+						dt.Charset = ""
+					}
+					if dt.Collation == dt.DefaultCollation {
+						dt.Collation = ""
+					}
 					v.DataType = dt
 				}
 

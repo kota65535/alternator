@@ -1,3 +1,8 @@
+ALTER DATABASE `db1` DEFAULT CHARACTER SET = latin1;
+ALTER DATABASE `db1` DEFAULT COLLATE = latin1_swedish_ci;
+ALTER TABLE `db1`.`t1` DEFAULT CHARACTER SET = latin1;
+ALTER TABLE `db1`.`t1` DEFAULT COLLATE = latin1_swedish_ci;
+ALTER TABLE `db1`.`t1` MODIFY COLUMN `var6` varchar(10);
 ALTER TABLE `db1`.`t1` DROP INDEX `idx1`;
 ALTER TABLE `db1`.`t1` ADD INDEX `idx1` (`int5`);
 ALTER TABLE `db1`.`t1` RENAME INDEX `idx2` TO `idx3`;

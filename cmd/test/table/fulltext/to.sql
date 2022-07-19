@@ -11,7 +11,7 @@ CREATE TABLE `t1`
     `var5` varchar(16),
     `var6` varchar(16),
     # modified
-    FULLTEXT INDEX (`var2`, `var3`) INVISIBLE,
+    FULLTEXT INDEX (`var2`) INVISIBLE,
     # remained
     FULLTEXT KEY (`var1`),
     # added

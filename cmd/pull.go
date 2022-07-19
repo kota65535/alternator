@@ -7,6 +7,7 @@ import (
 	"github.com/emirpasic/gods/sets/hashset"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/kota65535/alternator/lib"
+	"github.com/kota65535/alternator/parser"
 	"github.com/spf13/cobra"
 	"os"
 	"strings"
@@ -32,7 +33,9 @@ func init() {
 }
 
 func pullCmd(url string) {
-	schemas := fetchSchemas(url)
+	db := connectToDb(url)
+	config := parser.FetchGlobalConfig(db)
+	schemas := fetchSchemas(url, db, config)
 
 	ePrintf(strings.Repeat("―", width))
 
@@ -51,38 +54,41 @@ func pullCmd(url string) {
 	}
 }
 
-func fetchSchemas(url string) []lib.Schema {
+func connectToDb(url string) *sql.DB {
 	dbUrl := parseDatabaseUrl(url)
 	dPrintln(dbUrl.Dsn())
 	db, err := sql.Open(dbUrl.Dialect, dbUrl.Dsn())
-	defer db.Close()
 	cobra.CheckErr(err)
+	return db
+}
 
+func fetchSchemas(url string, db *sql.DB, config *parser.GlobalConfig) []lib.Schema {
 	var schemas []lib.Schema
+	dbUrl := parseDatabaseUrl(url)
 	if dbUrl.DbName != "" {
 		bPrintf("Fetching schemas of database '%s'...\n", dbUrl.DbName)
-		schemas = []lib.Schema{fetchFromDatabase(db, dbUrl.DbName)}
+		schemas = []lib.Schema{fetchFromDatabase(db, dbUrl.DbName, config)}
 	} else {
 		bPrintf("Fetching user-defined all database schemas...\n")
-		schemas = fetchFromDatabases(db)
+		schemas = fetchFromDatabases(db, config)
 	}
 	return schemas
 }
 
-func fetchFromDatabases(db *sql.DB) []lib.Schema {
+func fetchFromDatabases(db *sql.DB, config *parser.GlobalConfig) []lib.Schema {
 
 	databases := listUserDefinedDatabases(db)
 
 	var schemas []lib.Schema
 	for _, d := range databases {
-		stmts := fetchFromDatabase(db, d)
+		stmts := fetchFromDatabase(db, d, config)
 		schemas = append(schemas, stmts)
 	}
 
 	return schemas
 }
 
-func fetchFromDatabase(db *sql.DB, dbName string) lib.Schema {
+func fetchFromDatabase(db *sql.DB, dbName string, config *parser.GlobalConfig) lib.Schema {
 	var strs []string
 
 	strs = append(strs, getCreateDatabase(db, dbName))
@@ -94,7 +100,7 @@ func fetchFromDatabase(db *sql.DB, dbName string) lib.Schema {
 		strs = append(strs, getCreateTable(db, dbName, t))
 	}
 
-	return lib.NewSchemas(strings.Join(strs, ";\n"))[0]
+	return lib.NewSchemas(strings.Join(strs, ";\n"), config)[0]
 }
 
 func getCreateDatabase(db *sql.DB, name string) string {

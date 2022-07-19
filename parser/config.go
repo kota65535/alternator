@@ -12,7 +12,7 @@ type GlobalConfig struct {
 	CharsetToCollation   map[string]string
 }
 
-func FetchGlobalConfig(db *sql.DB) GlobalConfig {
+func FetchGlobalConfig(db *sql.DB) *GlobalConfig {
 	rows, err := db.Query("SHOW GLOBAL VARIABLES")
 	defer rows.Close()
 	cobra.CheckErr(err)
@@ -37,7 +37,7 @@ func FetchGlobalConfig(db *sql.DB) GlobalConfig {
 		charsetToCollation[charset] = collation
 	}
 
-	return GlobalConfig{
+	return &GlobalConfig{
 		CharacterSetServer:   variables["character_set_server"],
 		CharacterSetDatabase: variables["character_set_database"],
 		CollationServer:      variables["collation_server"],

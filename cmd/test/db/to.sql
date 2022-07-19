@@ -3,12 +3,26 @@ CREATE DATABASE db1;
 
 USE db1;
 
-# retained
-CREATE TABLE `t11`
+# renamed
+CREATE TABLE `t13`
 (
     `int1`     int,
-    `varchar1` varchar(10),
+    `varchar1` varchar(10) UNIQUE,
     PRIMARY KEY (`int1`)
+);
+
+# modified
+CREATE TABLE `t12`
+(
+    `int1`     int,
+    `int2`     int,
+    # added
+    `varchar1` varchar(10),
+    PRIMARY KEY (`int1`),
+    # retained, referencing the renamed table
+    FOREIGN KEY (`int2`) REFERENCES `t13` (`int1`),
+    # added, referencing the renamed table
+    FOREIGN KEY (`varchar1`) REFERENCES `t13` (`varchar1`)
 );
 
 # modified
@@ -18,26 +32,26 @@ CREATE DATABASE `db2`
 
 USE db2;
 
+# retained
+CREATE TABLE `t21`
+(
+    `int1`     int,
+    # modified due to the change of the default collation
+    `varchar1` varchar(10) UNIQUE,
+    PRIMARY KEY (`int1`)
+);
+
 # modified
 CREATE TABLE `t22`
 (
     `int1`     int,
     `int2`     int,
-    # added
     `varchar1` varchar(10),
     PRIMARY KEY (`int1`),
     # retained, referencing renamed table
-    FOREIGN KEY (`int2`) REFERENCES `t23` (`int1`),
+    FOREIGN KEY (`int2`) REFERENCES `t21` (`int1`),
     # added, referencing renamed table
-    FOREIGN KEY (`varchar1`) REFERENCES `t23` (`varchar1`)
-);
-
-# renamed
-CREATE TABLE `t23`
-(
-    `int1`     int,
-    `varchar1` varchar(10) UNIQUE,
-    PRIMARY KEY (`int1`)
+    FOREIGN KEY (`varchar1`) REFERENCES `t21` (`varchar1`)
 );
 
 # added
