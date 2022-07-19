@@ -10,6 +10,7 @@ CREATE TABLE `t1`
     `int4` int,
     `int5` int,
     `int6` int,
+    `int7` int,
     # remained
     UNIQUE KEY (`int1`),
     # modified
@@ -17,7 +18,9 @@ CREATE TABLE `t1`
     # removed
     UNIQUE INDEX idx1 (`int4`),
     # renamed
-    UNIQUE INDEX idx2 (`int6`)
+    UNIQUE INDEX idx2 (`int6`),
+    # column renamed
+    UNIQUE INDEX ((`int7` * 3))
 );
 
 CREATE TABLE `t2`
@@ -28,6 +31,7 @@ CREATE TABLE `t2`
     `int4` int,
     `int5` int,
     `int6` int,
+    `int7` int,
     # remained
     CONSTRAINT c1 UNIQUE KEY (`int1`),
     # modified
@@ -35,5 +39,7 @@ CREATE TABLE `t2`
     # removed
     CONSTRAINT c3 UNIQUE INDEX idx1 (`int4`),
     # renamed
-    CONSTRAINT c4 UNIQUE INDEX idx2 (`int6`)
+    CONSTRAINT c4 UNIQUE INDEX idx2 (`int6`),
+    # column renamed
+    CONSTRAINT c5 UNIQUE INDEX ((`int7` * 3))
 );

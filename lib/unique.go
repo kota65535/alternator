@@ -166,31 +166,6 @@ func (r *UniqueKeyAlterations) HandleColumnDrop(drop Alteration, columnName stri
 	}
 }
 
-// HandleColumnRename handles key part change caused by column rename.
-func (r *UniqueKeyAlterations) HandleColumnRename(fromName string, toName string) {
-	removed := map[Alteration]bool{}
-	// Changing key part is first considered as drop & add a foreign key, so we will find the pair
-	for _, d := range r.Dropped {
-		for _, a := range r.Added {
-			if keyPartContains(d.This.KeyPartList, fromName) && keyPartContains(a.This.KeyPartList, toName) {
-				// update key parts
-				d.This.KeyPartList = keyPartReplace(d.This.KeyPartList, fromName, toName)
-				if uniqueDefsEqual(*d.This, *a.This) {
-					r.Retained = append(r.Retained, &RetainedUniqueKey{
-						This:       a.This,
-						Sequential: a.Sequential,
-						Dependent:  a.Dependent,
-					})
-					removed[d] = true
-					removed[a] = true
-				}
-			}
-		}
-	}
-	r.Dropped = RemoveIf(r.Dropped, func(m *DroppedUniqueKey) bool { return removed[m] })
-	r.Added = RemoveIf(r.Added, func(m *AddedUniqueKey) bool { return removed[m] })
-}
-
 type AddedUniqueKey struct {
 	This *parser.UniqueKeyDefinition
 	Sequential

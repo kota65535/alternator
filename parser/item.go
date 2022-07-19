@@ -391,14 +391,14 @@ type KeyPart struct {
 }
 
 func (r KeyPart) String() string {
-	column := ""
-	if strings.HasPrefix(r.Column, "(") && strings.HasSuffix(r.Column, ")") {
-		column = r.Column
+	columnOrExpr := ""
+	if r.Column != "" {
+		columnOrExpr = fmt.Sprintf("`%s`", r.Column)
 	} else {
-		column = fmt.Sprintf("`%s`", r.Column)
+		columnOrExpr = r.Expression
 	}
 	return fmt.Sprintf("%s%s%s",
-		column,
+		columnOrExpr,
 		optS(r.Length, "(%s)"),
 		optS(r.Order, " %s"))
 }

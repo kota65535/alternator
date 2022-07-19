@@ -7,9 +7,11 @@
       `int4` int,
       `int5` int,
       `int6` int,
+~     `int7` int  -> `int8` int,
       UNIQUE KEY (`int1`),
 -     UNIQUE KEY `idx1` (`int4`),
 ~     UNIQUE KEY `idx2` (`int6`)  -> UNIQUE KEY `idx3` (`int6`),
+      UNIQUE KEY (`int8`),
 ~     UNIQUE KEY (`int2`, `int3`) -> UNIQUE KEY (`int2`, `int3`) INVISIBLE,
 +     UNIQUE KEY `idx2` (`int5`)
   );
@@ -21,9 +23,11 @@
       `int4` int,
       `int5` int,
       `int6` int,
+~     `int7` int  -> `int8` int,
       UNIQUE KEY `c1` (`int1`),
 -     UNIQUE KEY `idx1` (`int4`),
 ~     UNIQUE KEY `idx2` (`int6`)       -> UNIQUE KEY `idx3` (`int6`),
+      UNIQUE KEY `c5` (`int8`),
 ~     UNIQUE KEY `c2` (`int2`, `int3`) -> UNIQUE KEY `c2` (`int2`, `int3`) INVISIBLE,
 +     UNIQUE KEY `idx2` (`int5`)
   );

@@ -10,12 +10,15 @@ CREATE TABLE `t1`
     `int4` int,
     `int5` int,
     `int6` int,
-    # modified
-    INDEX (`int2`, `int3`) INVISIBLE,
+    `int8` int,
     # remained
     KEY (`int1`),
+    # modified
+    INDEX (`int2`, `int3`) INVISIBLE,
     # added
     INDEX idx1 (`int5`),
     # renamed
-    INDEX idx3 ((`int6` * 2))
+    INDEX idx3 ((`int6` * 2)),
+    # column renamed
+    INDEX ((`int8` * 3))
 );

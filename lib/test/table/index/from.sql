@@ -10,6 +10,7 @@ CREATE TABLE `t1`
     `int4` int,
     `int5` int,
     `int6` int,
+    `int7` int,
     # remained
     KEY (`int1`),
     # modified
@@ -17,5 +18,7 @@ CREATE TABLE `t1`
     # removed
     INDEX idx1 (`int4`),
     # renamed
-    INDEX idx2 ((`int6`*2))
+    INDEX idx2 ((`int6`*2)),
+    # column renamed
+    INDEX ((`int7` * 3))
 );

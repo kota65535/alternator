@@ -136,7 +136,7 @@ func NewTableAlterations(from []*parser.CreateTableStatement, to []*parser.Creat
 		for _, rt := range renamed {
 			mt.ForeignKeys.HandleTableRename(rt, rt.From.TableName, rt.To.TableName)
 		}
-		// handle foreign key column drop
+		// handle column drop
 		for _, dc := range mt.Columns.Dropped {
 			mt.UniqueKeys.HandleColumnDrop(dc, dc.This.ColumnName)
 			mt.Indexes.HandleColumnDrop(dc, dc.This.ColumnName)
@@ -221,6 +221,8 @@ type TableElementAlterations struct {
 
 func NewTableElementAlterations(t1 *parser.CreateTableStatement, t2 *parser.CreateTableStatement) TableElementAlterations {
 	columns := NewColumnAlterations(t1.GetColumns(), t2.GetColumns())
+
+	// Handle column rename
 	for _, c := range columns.Renamed {
 		for _, p := range t1.GetPrimaryKeys() {
 			p.KeyPartList = keyPartReplace(p.KeyPartList, c.From.ColumnName, c.To.ColumnName)

@@ -149,31 +149,6 @@ func (r *FullTextIndexAlterations) HandleColumnDrop(drop Alteration, columnName 
 	}
 }
 
-// HandleColumnRename handles key part change caused by column rename.
-func (r *FullTextIndexAlterations) HandleColumnRename(fromName string, toName string) {
-	removed := map[Alteration]bool{}
-	// Changing key part is first considered as drop & add a foreign key, so we will find the pair
-	for _, d := range r.Dropped {
-		for _, a := range r.Added {
-			if keyPartContains(d.This.KeyPartList, fromName) && keyPartContains(a.This.KeyPartList, toName) {
-				// update key parts
-				d.This.KeyPartList = keyPartReplace(d.This.KeyPartList, fromName, toName)
-				if fullTextIndexDefsEqual(*d.This, *a.This) {
-					r.Retained = append(r.Retained, &RetainedFullTextIndex{
-						This:       a.This,
-						Sequential: a.Sequential,
-						Dependent:  a.Dependent,
-					})
-					removed[d] = true
-					removed[a] = true
-				}
-			}
-		}
-	}
-	r.Dropped = RemoveIf(r.Dropped, func(m *DroppedFullTextIndex) bool { return removed[m] })
-	r.Added = RemoveIf(r.Added, func(m *AddedFullTextIndex) bool { return removed[m] })
-}
-
 type AddedFullTextIndex struct {
 	This *parser.FullTextIndexDefinition
 	Sequential

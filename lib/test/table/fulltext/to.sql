@@ -10,6 +10,7 @@ CREATE TABLE `t1`
     `var4` varchar(16),
     `var5` varchar(16),
     `var6` varchar(16),
+    `var8` varchar(16),
     # modified
     FULLTEXT INDEX (`var2`, `var3`) INVISIBLE,
     # remained
@@ -17,5 +18,7 @@ CREATE TABLE `t1`
     # added
     FULLTEXT INDEX idx1 (`var5`),
     # renamed
-    FULLTEXT INDEX idx3 (`var6`)
+    FULLTEXT INDEX idx3 (`var6`),
+    # column renamed
+    FULLTEXT INDEX (`var8`)
 );

@@ -5,6 +5,7 @@ import (
 	"github.com/emirpasic/gods/sets/linkedhashset"
 	"github.com/kota65535/alternator/parser"
 	"sort"
+	"strings"
 )
 
 type IndexAlterations struct {
@@ -146,31 +147,6 @@ func (r *IndexAlterations) HandleColumnDrop(drop Alteration, columnName string) 
 			drop.AddDependsOn(d)
 		}
 	}
-}
-
-// HandleColumnRename handles key part change caused by column rename.
-func (r *IndexAlterations) HandleColumnRename(fromName string, toName string) {
-	removed := map[Alteration]bool{}
-	// Changing key part is first considered as drop & add a foreign key, so we will find the pair
-	for _, d := range r.Dropped {
-		for _, a := range r.Added {
-			if keyPartContains(d.This.KeyPartList, fromName) && keyPartContains(a.This.KeyPartList, toName) {
-				// update key parts
-				d.This.KeyPartList = keyPartReplace(d.This.KeyPartList, fromName, toName)
-				if d.This.EqualsExceptIndexName(*a.This) {
-					r.Retained = append(r.Retained, &RetainedIndex{
-						This:       a.This,
-						Sequential: a.Sequential,
-						Dependent:  a.Dependent,
-					})
-					removed[d] = true
-					removed[a] = true
-				}
-			}
-		}
-	}
-	r.Dropped = RemoveIf(r.Dropped, func(m *DroppedIndex) bool { return removed[m] })
-	r.Added = RemoveIf(r.Added, func(m *AddedIndex) bool { return removed[m] })
 }
 
 type AddedIndex struct {
@@ -315,10 +291,12 @@ func keyPartReplace(keyParts []parser.KeyPart, fromName string, toName string) [
 	for _, k := range keyParts {
 		if k.Column == fromName {
 			k.Column = toName
-			ret = append(ret, k)
-		} else {
-			ret = append(ret, k)
 		}
+		if fromNameQ := fmt.Sprintf("`%s`", fromName); strings.Contains(k.Expression, fromNameQ) {
+			toNameQ := fmt.Sprintf("`%s`", toName)
+			k.Expression = strings.Replace(k.Expression, fromNameQ, toNameQ, -1)
+		}
+		ret = append(ret, k)
 	}
 	return ret
 }
