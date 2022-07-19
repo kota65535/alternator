@@ -540,7 +540,7 @@ func (r RenamedTable) Diff() []string {
 	to := prefix(r.To.String(), "  ")
 	fromHead, _, _ := strings.Cut(from, "\n")
 	toHead, _, _ := strings.Cut(to, "\n")
-	ret := strings.Replace(from, fromHead, fmt.Sprintf("~ %s -> %s", fromHead[2:], toHead[2:]), 1)
+	ret := strings.Replace(to, toHead, fmt.Sprintf("~ %s -> %s", fromHead[2:], toHead[2:]), 1)
 	return []string{ret}
 }
 
