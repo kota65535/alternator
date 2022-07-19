@@ -9,9 +9,11 @@ import (
 	"testing"
 )
 
-func TestCreateDb(t *testing.T) {
-
+func init() {
 	logrus.SetLevel(logrus.DebugLevel)
+}
+
+func TestCreateDb(t *testing.T) {
 
 	f, err := os.Open("test/db/input.sql")
 	require.NoError(t, err)
@@ -22,12 +24,13 @@ func TestCreateDb(t *testing.T) {
 
 	assert.Equal(t, []Statement{
 		CreateDatabaseStatement{
-			DbName: "db1",
+			DbName:          "db1",
+			DatabaseOptions: &DatabaseOptions{},
 		},
 		CreateDatabaseStatement{
 			IfNotExists: true,
 			DbName:      "db2",
-			DatabaseOptions: DatabaseOptions{
+			DatabaseOptions: &DatabaseOptions{
 				DefaultCharset:    "utf8mb4",
 				DefaultCollate:    "utf8mb4_bin",
 				DefaultEncryption: "'Y'",
@@ -36,7 +39,7 @@ func TestCreateDb(t *testing.T) {
 		CreateDatabaseStatement{
 			IfNotExists: true,
 			DbName:      "db3",
-			DatabaseOptions: DatabaseOptions{
+			DatabaseOptions: &DatabaseOptions{
 				DefaultCharset:    "utf8mb4",
 				DefaultCollate:    "utf8mb4_unicode_ci",
 				DefaultEncryption: "'N'",

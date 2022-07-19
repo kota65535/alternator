@@ -89,7 +89,6 @@ token *lexer.Token
     PrimaryKeyDefinition
     UniqueKeyDefinition
    	ForeignKeyDefinition
-   	CheckConstraintDefinition
   	KeyPart
 
   	// Partitions
@@ -2582,11 +2581,7 @@ Expressions:
 	}
 
 Expression:
-	lp Expression rp
-	{
-		$$ = $2
-	}
-|	Expression AndKwd Expression
+	Expression AndKwd Expression
 	{
 		$$ = fmt.Sprintf("%s AND %s", $1, $3)
 	}
