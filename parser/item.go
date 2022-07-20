@@ -7,6 +7,13 @@ import (
 	"strings"
 )
 
+type GlobalConfig struct {
+	CharacterSetServer   string
+	CharacterSetDatabase string
+	CollationServer      string
+	CharsetToCollation   map[string]string
+}
+
 type DatabaseOptions struct {
 	DefaultCharset    string
 	DefaultCollate    string

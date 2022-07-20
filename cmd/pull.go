@@ -38,7 +38,7 @@ func pullCmd(url string) {
 	bPrintf("done.")
 	defer db.Close()
 	bPrintf("Fetching remote server global config... ")
-	config := parser.FetchGlobalConfig(db)
+	config := fetchGlobalConfig(db)
 	schemas := fetchSchemas(db, dbUrl, config)
 
 	// Show remote database schemas

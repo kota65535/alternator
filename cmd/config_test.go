@@ -1,4 +1,4 @@
-package parser
+package cmd
 
 import (
 	"database/sql"
@@ -10,13 +10,13 @@ import (
 )
 
 func TestFetchConfig(t *testing.T) {
-	dsn := fmt.Sprintf("root@(localhost:3306)/?multiStatements=true")
+	dsn := fmt.Sprintf("root@(localhost:13306)/?multiStatements=true")
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		panic(err)
 	}
 
-	config := FetchGlobalConfig(db)
+	config := fetchGlobalConfig(db)
 
 	assert.NotEmpty(t, config.CharacterSetDatabase)
 	assert.NotEmpty(t, config.CharacterSetServer)

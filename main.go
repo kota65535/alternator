@@ -5,5 +5,6 @@ import (
 )
 
 func main() {
+	//defer profile.Start().Stop()
 	cmd.Execute()
 }

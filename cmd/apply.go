@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"fmt"
 	"github.com/kota65535/alternator/lib"
-	"github.com/kota65535/alternator/parser"
 	"github.com/spf13/cobra"
 	"log"
 	"os"
@@ -42,7 +41,7 @@ func applyCmd(local string, remote string, params ApplyParams) *lib.DatabaseAlte
 	bPrintf("done.")
 	defer db.Close()
 	bPrintf("Fetching remote server global config... ")
-	config := parser.FetchGlobalConfig(db)
+	config := fetchGlobalConfig(db)
 	alt := getAlterations(local, db, dbUrl, config)
 
 	ePrintln(strings.Repeat("―", width))
