@@ -60,6 +60,11 @@ func normalizeDataType(t interface{}) interface{} {
 				it.FieldLen = fl[0]
 			}
 		}
+		// bool is a synonym of tinyint(1)
+		if it.Name == "tinyint" && it.FieldLen == "1" {
+			it.Name = "bool"
+			it.FieldLen = ""
+		}
 		return it
 	}
 	return t
@@ -112,6 +117,15 @@ func normalizeStatements(statements []parser.Statement, config *parser.GlobalCon
 			for _, v := range columns {
 
 				v.DataType = normalizeDataType(v.DataType)
+
+				if it, ok := v.DataType.(parser.IntegerType); ok && it.Name == "bool" {
+					if v.ColumnOptions.Default == "'0'" {
+						v.ColumnOptions.Default = "FALSE"
+					}
+					if v.ColumnOptions.Default == "'1'" {
+						v.ColumnOptions.Default = "TRUE"
+					}
+				}
 
 				if dt, ok := v.DataType.(parser.StringType); ok {
 					dt.DefaultCharset = cts.TableOptions.ActualDefaultCharset()

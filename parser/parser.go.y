@@ -787,10 +787,8 @@ IntegerType:
 	}
 |	BoolKwd
 	{
-		// Bool type is synonym of tinyint(1)
 		$$ = IntegerType{
-			Name: "tinyint",
-			FieldLen: "1",
+			Name: "bool",
 		}
 	}
 |	SMALLINT OptFieldLen OptUnsignedKwd OptZerofillKwd
