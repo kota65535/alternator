@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/kota65535/alternator/lib"
 	"github.com/kota65535/alternator/parser"
+	"github.com/pkg/profile"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"io/ioutil"
@@ -29,6 +30,7 @@ func init() {
 }
 
 func planCmd(local string, remote string) *lib.DatabaseAlterations {
+	defer profile.Start().Stop()
 	dbUrl := parseDatabaseUrl(remote)
 	bPrint("Connecting to database... ")
 	db := connectToDb(dbUrl)

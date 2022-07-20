@@ -45,10 +45,14 @@ func (ptt *SimpleTokenType) GetID() TokenID {
 }
 
 func (ptt *SimpleTokenType) FindToken(s string, p Position) *Token {
-	if ptt.IgnoreCase {
-		s = strings.ToUpper(s)
+	if len(s) < len(ptt.Pattern) {
+		return nil
 	}
-	if !strings.HasPrefix(s, ptt.Pattern) {
+	substr := s[0:len(ptt.Pattern)]
+	if ptt.IgnoreCase {
+		substr = strings.ToUpper(substr)
+	}
+	if substr != ptt.Pattern {
 		return nil
 	}
 
@@ -66,20 +70,18 @@ func (ptt *SimpleTokenType) GetPriority() int {
 type RegexpTokenType struct {
 	ID              TokenID
 	Re              *regexp.Regexp
-	IgnoreCase      bool
 	Priority        int
 	PreviousTokenID TokenID
 }
 
-func NewRegexpTokenType(id TokenID, re string, ignoreCase bool, priority int) *RegexpTokenType {
+func NewRegexpTokenType(id TokenID, re string, priority int) *RegexpTokenType {
 	if !strings.HasPrefix(re, "^") {
 		re = "^(?:" + re + ")"
 	}
 	return &RegexpTokenType{
-		ID:         id,
-		Re:         regexp.MustCompile(re),
-		IgnoreCase: ignoreCase,
-		Priority:   priority,
+		ID:       id,
+		Re:       regexp.MustCompile(re),
+		Priority: priority,
 	}
 }
 
@@ -93,9 +95,6 @@ func (rtt *RegexpTokenType) GetID() TokenID {
 
 func (rtt *RegexpTokenType) FindToken(s string, p Position) *Token {
 	m := rtt.Re.FindStringSubmatch(s)
-	if rtt.IgnoreCase {
-		s = strings.ToUpper(s)
-	}
 	if len(m) > 0 {
 		return &Token{
 			Type:       rtt,

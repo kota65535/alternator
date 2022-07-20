@@ -41,10 +41,10 @@ func NewParser(reader io.Reader) *Parser {
 	//
 	// In this case, shift takes precedence and ENFORCED token is expected, so NULL token causes parse error.
 	// To prevent this, we treat keyword containing "NOT" (ex: "NOT NULL") as a single token, like "NOT\s+NULL".
-	tokens = append(tokens, lexer.NewRegexpTokenType(NOT_ENFORCED, "NOT\\s+ENFORCED", true, 1))
+	tokens = append(tokens, lexer.NewRegexpTokenType(NOT_ENFORCED, "(NOT|not)\\s+(ENFORCED|enforced)", 1))
 
 	for _, v := range Skipped {
-		skippedTokens = append(skippedTokens, lexer.NewRegexpTokenType(-1, v, false, 0))
+		skippedTokens = append(skippedTokens, lexer.NewRegexpTokenType(-1, v, 0))
 	}
 
 	l := lexer.NewLexer(reader, tokens, skippedTokens)

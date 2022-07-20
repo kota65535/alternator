@@ -8,11 +8,11 @@ import (
 )
 
 var Skipped = []TokenType{
-	NewRegexpTokenType(-1, `\s`, false, 0),
-	NewRegexpTokenType(-1, `#.*\n`, false, 0),
-	NewRegexpTokenType(-1, `/\*[^!].*?\*/`, false, 0),
-	NewRegexpTokenType(-1, `/\*!\d{5}`, false, 0),
-	NewRegexpTokenType(-1, `\*/`, false, 0),
+	NewRegexpTokenType(-1, `\s`, 0),
+	NewRegexpTokenType(-1, `#.*\n`, 0),
+	NewRegexpTokenType(-1, `/\*[^!].*?\*/`, 0),
+	NewRegexpTokenType(-1, `/\*!\d{5}`, 0),
+	NewRegexpTokenType(-1, `\*/`, 0),
 }
 
 func TestSimpleTokenType(t *testing.T) {
@@ -44,8 +44,8 @@ func TestRegexTokenType(t *testing.T) {
 	l := NewLexer(strings.NewReader(schema),
 		[]TokenType{
 			NewSimpleTokenType(1, "REFERENCES", true, 1),
-			NewRegexpTokenType(2, "[a-zA-Z0-9]+", true, 2),
-			NewRegexpTokenType(3, "MATCH (FULL|PARTIAL)", true, 1),
+			NewRegexpTokenType(2, "[a-zA-Z0-9]+", 2),
+			NewRegexpTokenType(3, "MATCH (FULL|PARTIAL)", 1),
 		},
 		Skipped,
 	)
@@ -74,7 +74,7 @@ func TestSkippedTokenType(t *testing.T) {
 			NewSimpleTokenType(2, "TABLE", true, 1),
 			NewSimpleTokenType(3, "(", true, 1),
 			NewSimpleTokenType(4, ")", true, 1),
-			NewRegexpTokenType(5, "`[a-zA-Z0-9]+`", true, 2),
+			NewRegexpTokenType(5, "`[a-zA-Z0-9]+`", 2),
 		},
 		Skipped,
 	)
