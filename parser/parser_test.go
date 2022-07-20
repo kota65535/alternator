@@ -201,15 +201,13 @@ func TestCreateTableWithNumericTypes(t *testing.T) {
 				&ColumnDefinition{
 					ColumnName: "bool1",
 					DataType: IntegerType{
-						Name:     "tinyint",
-						FieldLen: "1",
+						Name: "bool",
 					},
 				},
 				&ColumnDefinition{
 					ColumnName: "bool2",
 					DataType: IntegerType{
-						Name:     "tinyint",
-						FieldLen: "1",
+						Name: "bool",
 					},
 					ColumnOptions: ColumnOptions{
 						Nullability: "NOT NULL",

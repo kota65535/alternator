@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"database/sql"
 	_ "embed"
 	"fmt"
 	"github.com/kota65535/alternator/lib"
@@ -28,15 +29,25 @@ func init() {
 }
 
 func planCmd(local string, remote string) *lib.DatabaseAlterations {
+	dbUrl := parseDatabaseUrl(remote)
+	bPrint("Connecting to database... ")
+	db := connectToDb(dbUrl)
+	bPrintln("done.")
+	defer db.Close()
+	bPrint("Fetching remote server global config... ")
+	config := parser.FetchGlobalConfig(db)
+	bPrintln("done.")
+	alt := getAlterations(local, db, dbUrl, config)
 
-	alt := getAlterations(local, remote)
-
+	// Show diff
 	ePrintln(strings.Repeat("―", width))
 	bPrintln("Schema diff:")
 	bPrintln()
 	for _, s := range alt.Diff() {
 		printlnDiff(s)
 	}
+
+	// Show statements to execute
 	ePrintln(strings.Repeat("―", width))
 	statements := alt.Statements()
 	if len(statements) == 0 {
@@ -51,12 +62,11 @@ func planCmd(local string, remote string) *lib.DatabaseAlterations {
 	return &alt
 }
 
-func getAlterations(to string, from string) lib.DatabaseAlterations {
-	db := connectToDb(from)
-	config := parser.FetchGlobalConfig(db)
-	toSchemas := readSchemas(to, config)
-	fromSchemas := fetchSchemas(from, db, config)
-	defer db.Close()
+func getAlterations(path string, db *sql.DB, dbUrl DatabaseUrl, config *parser.GlobalConfig) lib.DatabaseAlterations {
+	bPrint("Reading local schema file... ")
+	toSchemas := readSchemas(path, config)
+	bPrintln("done.")
+	fromSchemas := fetchSchemas(db, dbUrl, config)
 
 	logrus.Debug("Showing local file schema")
 	for _, s := range toSchemas {

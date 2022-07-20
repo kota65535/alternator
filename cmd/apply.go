@@ -2,10 +2,10 @@ package cmd
 
 import (
 	"bufio"
-	"database/sql"
 	_ "embed"
 	"fmt"
 	"github.com/kota65535/alternator/lib"
+	"github.com/kota65535/alternator/parser"
 	"github.com/spf13/cobra"
 	"log"
 	"os"
@@ -36,7 +36,14 @@ func init() {
 }
 
 func applyCmd(local string, remote string, params ApplyParams) *lib.DatabaseAlterations {
-	alt := getAlterations(local, remote)
+	dbUrl := parseDatabaseUrl(remote)
+	bPrintf("Connecting to database... ")
+	db := connectToDb(dbUrl)
+	bPrintf("done.")
+	defer db.Close()
+	bPrintf("Fetching remote server global config... ")
+	config := parser.FetchGlobalConfig(db)
+	alt := getAlterations(local, db, dbUrl, config)
 
 	ePrintln(strings.Repeat("―", width))
 	statements := alt.Statements()
@@ -57,11 +64,6 @@ func applyCmd(local string, remote string, params ApplyParams) *lib.DatabaseAlte
 		}
 		ePrintln()
 	}
-
-	dbUrl := parseDatabaseUrl(remote)
-	db, err := sql.Open(dbUrl.Dialect, dbUrl.Dsn())
-	defer db.Close()
-	cobra.CheckErr(err)
 
 	for _, s := range alt.Statements() {
 		ePrintf("Executing: %s\n", s)

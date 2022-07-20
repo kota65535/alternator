@@ -27,23 +27,26 @@ func init() {
 			pullCmd(args[0])
 		},
 	}
-
 	rootCmd.AddCommand(c)
 	c.SetUsageTemplate(pullUsage)
 }
 
 func pullCmd(url string) {
-	db := connectToDb(url)
+	dbUrl := parseDatabaseUrl(url)
+	bPrintf("Connecting to database... ")
+	db := connectToDb(dbUrl)
+	bPrintf("done.")
+	defer db.Close()
+	bPrintf("Fetching remote server global config... ")
 	config := parser.FetchGlobalConfig(db)
-	schemas := fetchSchemas(url, db, config)
+	schemas := fetchSchemas(db, dbUrl, config)
 
+	// Show remote database schemas
 	ePrintf(strings.Repeat("―", width))
-
 	if len(schemas) == 0 {
 		bPrintln("No database.")
 		os.Exit(0)
 	}
-
 	for _, s := range schemas {
 		fmt.Println(s.Database.String())
 		fmt.Println()
@@ -54,17 +57,15 @@ func pullCmd(url string) {
 	}
 }
 
-func connectToDb(url string) *sql.DB {
-	dbUrl := parseDatabaseUrl(url)
+func connectToDb(dbUrl DatabaseUrl) *sql.DB {
 	dPrintln(dbUrl.Dsn())
 	db, err := sql.Open(dbUrl.Dialect, dbUrl.Dsn())
 	cobra.CheckErr(err)
 	return db
 }
 
-func fetchSchemas(url string, db *sql.DB, config *parser.GlobalConfig) []lib.Schema {
+func fetchSchemas(db *sql.DB, dbUrl DatabaseUrl, config *parser.GlobalConfig) []lib.Schema {
 	var schemas []lib.Schema
-	dbUrl := parseDatabaseUrl(url)
 	if dbUrl.DbName != "" {
 		bPrintf("Fetching schemas of database '%s'...\n", dbUrl.DbName)
 		schemas = []lib.Schema{fetchFromDatabase(db, dbUrl.DbName, config)}

@@ -17,6 +17,10 @@ var (
 	Cyan   = color.New(color.FgCyan)
 )
 
+func bPrint(a ...any) {
+	Bold.Fprint(os.Stderr, a...)
+}
+
 func bPrintf(format string, a ...any) {
 	Bold.Fprintf(os.Stderr, format, a...)
 }
