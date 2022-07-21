@@ -128,10 +128,10 @@ func ReadSchemas(filename string, config *parser.GlobalConfig) []lib.Schema {
 func FetchSchemas(db *sql.DB, dbUrl DatabaseUrl, config *parser.GlobalConfig) []lib.Schema {
 	var schemas []lib.Schema
 	if dbUrl.DbName != "" {
-		bPrintf("Fetching schemas of database '%s'...\n", dbUrl.DbName)
+		//bPrintf("Fetching schemas of database '%s'...\n", dbUrl.DbName)
 		schemas = []lib.Schema{fetchFromDatabase(db, dbUrl.DbName, config)}
 	} else {
-		bPrintf("Fetching user-defined all database schemas...\n")
+		//bPrintf("Fetching user-defined all database schemas...\n")
 		schemas = fetchFromDatabases(db, config)
 	}
 	return schemas
