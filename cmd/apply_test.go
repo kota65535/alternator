@@ -39,7 +39,7 @@ func TestApply(t *testing.T) {
 			// when
 			err := prepareDb(dir, fixture.Database)
 			require.NoError(t, err)
-			alt := applyCmd(testFile(dir, "to.sql", fixture.Database), url, ApplyParam)
+			alt := ApplyCmd(testFile(dir, "to.sql", fixture.Database), url, ApplyParam)
 
 			// assert ALTER statements
 			s, err := getAlter(dir, fixture.Database)
@@ -47,7 +47,7 @@ func TestApply(t *testing.T) {
 			assert.Equal(t, s, strings.Join(alt.Statements(), "\n"))
 
 			// 2nd apply should return empty statements
-			alt2 := applyCmd(testFile(dir, "to.sql", fixture.Database), url, ApplyParam)
+			alt2 := ApplyCmd(testFile(dir, "to.sql", fixture.Database), url, ApplyParam)
 			assert.Nil(t, alt2)
 		})
 	}

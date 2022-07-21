@@ -35,7 +35,7 @@ func TestPlan(t *testing.T) {
 			// when
 			err := prepareDb(dir, fixture.Database)
 			require.NoError(t, err)
-			alt := planCmd(testFile(dir, "to.sql", fixture.Database), url)
+			alt := PlanCmd(testFile(dir, "to.sql", fixture.Database), url)
 
 			// assert diff
 			s, err := getDiff(dir, fixture.Database)

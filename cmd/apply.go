@@ -1,12 +1,10 @@
 package cmd
 
 import (
-	"bufio"
 	_ "embed"
 	"fmt"
 	"github.com/kota65535/alternator/lib"
 	"github.com/spf13/cobra"
-	"log"
 	"os"
 	"strings"
 )
@@ -26,7 +24,7 @@ func init() {
 		Short: "Update the database schema according to the schema file",
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
-			applyCmd(args[0], args[1], params)
+			ApplyCmd(args[0], args[1], params)
 		},
 	}
 	c.Flags().BoolVar(&params.AutoApprove, "auto-approve", false, "Approve automatically")
@@ -34,16 +32,21 @@ func init() {
 	c.SetUsageTemplate(applyUsage)
 }
 
-func applyCmd(local string, remote string, params ApplyParams) *lib.DatabaseAlterations {
-	dbUrl := parseDatabaseUrl(remote)
-	bPrintf("Connecting to database... ")
-	db := connectToDb(dbUrl)
-	bPrintf("done.")
-	defer db.Close()
-	bPrintf("Fetching remote server global config... ")
-	config := fetchGlobalConfig(db)
-	alt := getAlterations(local, db, dbUrl, config)
+func ApplyCmd(local string, remote string, params ApplyParams) *lib.DatabaseAlterations {
+	dbUrl := ParseDatabaseUrl(remote)
 
+	bPrint("Connecting to database... ")
+	db := ConnectToDb(dbUrl)
+	bPrintln("done.")
+	defer db.Close()
+
+	bPrint("Fetching remote server global config... ")
+	config := FetchGlobalConfig(db)
+	bPrintln("done.")
+
+	alt := GetAlterations(local, db, dbUrl, config)
+
+	// Show statements to execute
 	ePrintln(strings.Repeat("―", width))
 	statements := alt.Statements()
 	if len(statements) == 0 {
@@ -56,6 +59,7 @@ func applyCmd(local string, remote string, params ApplyParams) *lib.DatabaseAlte
 		fmt.Println(s)
 	}
 
+	// Apply
 	ePrintln(strings.Repeat("―", width))
 	if !params.AutoApprove {
 		if !confirm("Do you want to apply?") {
@@ -71,25 +75,4 @@ func applyCmd(local string, remote string, params ApplyParams) *lib.DatabaseAlte
 	}
 	bPrintln("\nFinished!")
 	return &alt
-}
-
-func confirm(s string) bool {
-	reader := bufio.NewReader(os.Stdin)
-
-	for {
-		bPrintf("%s [y/n]: ", s)
-
-		response, err := reader.ReadString('\n')
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		response = strings.ToLower(strings.TrimSpace(response))
-
-		if response == "y" || response == "yes" {
-			return true
-		} else if response == "n" || response == "no" {
-			return false
-		}
-	}
 }

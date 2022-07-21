@@ -9,14 +9,14 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-func TestFetchConfig(t *testing.T) {
+func TestFetchGlobalConfig(t *testing.T) {
 	dsn := fmt.Sprintf("root@(localhost:13306)/?multiStatements=true")
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		panic(err)
 	}
 
-	config := fetchGlobalConfig(db)
+	config := FetchGlobalConfig(db)
 
 	assert.NotEmpty(t, config.CharacterSetDatabase)
 	assert.NotEmpty(t, config.CharacterSetServer)

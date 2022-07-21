@@ -1,14 +1,10 @@
 package cmd
 
 import (
-	"database/sql"
 	_ "embed"
 	"fmt"
 	"github.com/kota65535/alternator/lib"
-	"github.com/kota65535/alternator/parser"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"io/ioutil"
 	"strings"
 )
 
@@ -21,23 +17,26 @@ func init() {
 		Short: "Show database schema changes required by the schema file",
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
-			planCmd(args[0], args[1])
+			PlanCmd(args[0], args[1])
 		},
 	}
 	rootCmd.AddCommand(c)
 	c.SetUsageTemplate(planUsage)
 }
 
-func planCmd(local string, remote string) *lib.DatabaseAlterations {
-	dbUrl := parseDatabaseUrl(remote)
+func PlanCmd(local string, remote string) *lib.DatabaseAlterations {
+	dbUrl := ParseDatabaseUrl(remote)
+
 	bPrint("Connecting to database... ")
-	db := connectToDb(dbUrl)
+	db := ConnectToDb(dbUrl)
 	bPrintln("done.")
 	defer db.Close()
+
 	bPrint("Fetching remote server global config... ")
-	config := fetchGlobalConfig(db)
+	config := FetchGlobalConfig(db)
 	bPrintln("done.")
-	alt := getAlterations(local, db, dbUrl, config)
+
+	alt := GetAlterations(local, db, dbUrl, config)
 
 	// Show diff
 	ePrintln(strings.Repeat("―", width))
@@ -60,30 +59,4 @@ func planCmd(local string, remote string) *lib.DatabaseAlterations {
 		fmt.Println(s)
 	}
 	return &alt
-}
-
-func getAlterations(path string, db *sql.DB, dbUrl DatabaseUrl, config *parser.GlobalConfig) lib.DatabaseAlterations {
-	bPrint("Reading local schema file... ")
-	toSchemas := readSchemas(path, config)
-	bPrintln("done.")
-	fromSchemas := fetchSchemas(db, dbUrl, config)
-
-	logrus.Debug("Showing local file schema")
-	for _, s := range toSchemas {
-		logrus.Debug(s.String())
-	}
-	logrus.Debug("Showing remote database schema")
-	for _, s := range fromSchemas {
-		logrus.Debug(s.String())
-	}
-
-	return lib.NewDatabaseAlterations(fromSchemas, toSchemas)
-}
-
-func readSchemas(filename string, config *parser.GlobalConfig) []lib.Schema {
-	b, err := ioutil.ReadFile(filename)
-	if err != nil {
-		cobra.CheckErr(err)
-	}
-	return lib.NewSchemas(string(b), config)
 }
