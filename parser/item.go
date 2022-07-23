@@ -281,8 +281,8 @@ func (t StringType) String() string {
 	return fmt.Sprintf("%s%s%s%s",
 		t.Name,
 		optS(t.FieldLen, "(%s)"),
-		optS(t.Charset, " CHARACTER SET %s"),
-		optS(t.Collation, " COLLATE %s"))
+		optB(t.Charset != "" && t.Charset != t.DefaultCharset, fmt.Sprintf(" CHARACTER SET %s", t.Charset)),
+		optB(t.Collation != "" && t.Collation != t.DefaultCollation, fmt.Sprintf(" COLLATE %s", t.Collation)))
 }
 
 type StringListType struct {
@@ -608,13 +608,13 @@ func (r TableOptions) Map() *linkedhashmap.Map {
 	if r.AvgRowLength != "" {
 		ret.Put("AVG_ROW_LENGTH", r.AvgRowLength)
 	}
-	if r.DefaultCharset != "" {
+	if r.DefaultCharset != "" && (r.DatabaseOptions == nil || r.DefaultCharset != r.DatabaseOptions.DefaultCharset) {
 		ret.Put("DEFAULT CHARACTER SET", r.DefaultCharset)
 	}
 	if r.Checksum != "" {
 		ret.Put("CHECKSUM", r.Checksum)
 	}
-	if r.DefaultCollate != "" {
+	if r.DefaultCollate != "" && (r.DatabaseOptions == nil || r.DefaultCollate != r.DatabaseOptions.DefaultCollate) {
 		ret.Put("DEFAULT COLLATE", r.DefaultCollate)
 	}
 	if r.Comment != "" {

@@ -55,6 +55,4 @@
 -     `int1`     int         NOT NULL,
 -     `varchar1` varchar(10),
 -     PRIMARY KEY (`int1`)
-- )
--     DEFAULT CHARACTER SET = utf8mb4
--     DEFAULT COLLATE = utf8mb4_bin;
+- );
