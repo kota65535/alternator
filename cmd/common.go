@@ -14,7 +14,10 @@ import (
 	"strings"
 )
 
-var SupportedDialects = hashset.New("mysql")
+var (
+	SupportedDialects = hashset.New("mysql")
+	Db                *sql.DB
+)
 
 type DatabaseUrl struct {
 	Dialect  string
@@ -66,8 +69,8 @@ func ConnectToDb(dbUrl DatabaseUrl) *sql.DB {
 	return db
 }
 
-func FetchGlobalConfig(db *sql.DB) *parser.GlobalConfig {
-	rows1, err := db.Query("SHOW GLOBAL VARIABLES")
+func FetchGlobalConfig() *parser.GlobalConfig {
+	rows1, err := Db.Query("SHOW GLOBAL VARIABLES")
 	defer rows1.Close()
 	cobra.CheckErr(err)
 	var name string
@@ -78,7 +81,7 @@ func FetchGlobalConfig(db *sql.DB) *parser.GlobalConfig {
 		variables[name] = value
 	}
 
-	rows2, err := db.Query("SHOW CHARACTER SET")
+	rows2, err := Db.Query("SHOW CHARACTER SET")
 	defer rows2.Close()
 	cobra.CheckErr(err)
 	var charset string
@@ -99,11 +102,17 @@ func FetchGlobalConfig(db *sql.DB) *parser.GlobalConfig {
 	}
 }
 
-func GetAlterations(path string, db *sql.DB, dbUrl DatabaseUrl, config *parser.GlobalConfig) lib.DatabaseAlterations {
+func GetAlterations(path string, dbUrl DatabaseUrl, config *parser.GlobalConfig) lib.DatabaseAlterations {
 	bPrint("Reading local schema file... ")
 	toSchemas := ReadSchemas(path, config)
 	bPrintln("done.")
-	fromSchemas := FetchSchemas(db, dbUrl, config)
+	if dbUrl.DbName != "" {
+		bPrintf("Fetching schemas of database '%s'...\n", dbUrl.DbName)
+	} else {
+		bPrintf("Fetching user-defined all database schemas...\n")
+	}
+	fromSchemas := FetchSchemas(dbUrl, config)
+	bPrintln("done.")
 
 	logrus.Debug("Showing local file schema")
 	for _, s := range toSchemas {
@@ -125,48 +134,46 @@ func ReadSchemas(filename string, config *parser.GlobalConfig) []lib.Schema {
 	return lib.NewSchemas(string(b), config)
 }
 
-func FetchSchemas(db *sql.DB, dbUrl DatabaseUrl, config *parser.GlobalConfig) []lib.Schema {
+func FetchSchemas(dbUrl DatabaseUrl, config *parser.GlobalConfig) []lib.Schema {
 	var schemas []lib.Schema
 	if dbUrl.DbName != "" {
-		//bPrintf("Fetching schemas of database '%s'...\n", dbUrl.DbName)
-		schemas = []lib.Schema{fetchFromDatabase(db, dbUrl.DbName, config)}
+		schemas = []lib.Schema{fetchFromDatabase(dbUrl.DbName, config)}
 	} else {
-		//bPrintf("Fetching user-defined all database schemas...\n")
-		schemas = fetchFromDatabases(db, config)
+		schemas = fetchFromDatabases(config)
 	}
 	return schemas
 }
 
-func fetchFromDatabases(db *sql.DB, config *parser.GlobalConfig) []lib.Schema {
+func fetchFromDatabases(config *parser.GlobalConfig) []lib.Schema {
 
-	databases := listUserDefinedDatabases(db)
+	databases := listUserDefinedDatabases()
 
 	var schemas []lib.Schema
 	for _, d := range databases {
-		stmts := fetchFromDatabase(db, d, config)
+		stmts := fetchFromDatabase(d, config)
 		schemas = append(schemas, stmts)
 	}
 
 	return schemas
 }
 
-func fetchFromDatabase(db *sql.DB, dbName string, config *parser.GlobalConfig) lib.Schema {
+func fetchFromDatabase(dbName string, config *parser.GlobalConfig) lib.Schema {
 	var strs []string
 
-	strs = append(strs, getCreateDatabase(db, dbName))
+	strs = append(strs, getCreateDatabase(dbName))
 	strs = append(strs, fmt.Sprintf("USE `%s`", dbName))
 
-	tables := listTables(db, dbName)
+	tables := listTables(dbName)
 
 	for _, t := range tables {
-		strs = append(strs, getCreateTable(db, dbName, t))
+		strs = append(strs, getCreateTable(dbName, t))
 	}
 
 	return lib.NewSchemas(strings.Join(strs, ";\n"), config)[0]
 }
 
-func getCreateDatabase(db *sql.DB, name string) string {
-	rows, err := db.Query(fmt.Sprintf("SHOW CREATE DATABASE `%s`", name))
+func getCreateDatabase(name string) string {
+	rows, err := Db.Query(fmt.Sprintf("SHOW CREATE DATABASE `%s`", name))
 	defer rows.Close()
 	cobra.CheckErr(err)
 	var dbName string
@@ -177,8 +184,8 @@ func getCreateDatabase(db *sql.DB, name string) string {
 	return statement
 }
 
-func getCreateTable(db *sql.DB, dbName string, tableName string) string {
-	rows, err := db.Query(fmt.Sprintf("SHOW CREATE TABLE `%s`.`%s`", dbName, tableName))
+func getCreateTable(dbName string, tableName string) string {
+	rows, err := Db.Query(fmt.Sprintf("SHOW CREATE TABLE `%s`.`%s`", dbName, tableName))
 	defer rows.Close()
 	cobra.CheckErr(err)
 	var statement string
@@ -188,8 +195,8 @@ func getCreateTable(db *sql.DB, dbName string, tableName string) string {
 	return statement
 }
 
-func listDatabases(db *sql.DB) []string {
-	rows, err := db.Query("SHOW DATABASES")
+func listDatabases() []string {
+	rows, err := Db.Query("SHOW DATABASES")
 	defer rows.Close()
 	cobra.CheckErr(err)
 
@@ -202,8 +209,8 @@ func listDatabases(db *sql.DB) []string {
 	return databases
 }
 
-func listUserDefinedDatabases(db *sql.DB) []string {
-	databases := listDatabases(db)
+func listUserDefinedDatabases() []string {
+	databases := listDatabases()
 	ret := []string{}
 	for _, d := range databases {
 		if !IgnoredDatabases.Contains(d) {
@@ -213,8 +220,8 @@ func listUserDefinedDatabases(db *sql.DB) []string {
 	return ret
 }
 
-func listTables(db *sql.DB, dbName string) []string {
-	rows, err := db.Query(fmt.Sprintf("SHOW TABLES FROM `%s`", dbName))
+func listTables(dbName string) []string {
+	rows, err := Db.Query(fmt.Sprintf("SHOW TABLES FROM `%s`", dbName))
 	defer rows.Close()
 	cobra.CheckErr(err)
 

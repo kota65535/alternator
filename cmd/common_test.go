@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -10,13 +9,10 @@ import (
 )
 
 func TestFetchGlobalConfig(t *testing.T) {
-	dsn := fmt.Sprintf("root@(localhost:13306)/?multiStatements=true")
-	db, err := sql.Open("mysql", dsn)
-	if err != nil {
-		panic(err)
-	}
-
-	config := FetchGlobalConfig(db)
+	dsn := fmt.Sprintf("mysql://root@localhost:13306/?multiStatements=true")
+	Db = ConnectToDb(ParseDatabaseUrl(dsn))
+	defer Db.Close()
+	config := FetchGlobalConfig()
 
 	assert.NotEmpty(t, config.CharacterSetDatabase)
 	assert.NotEmpty(t, config.CharacterSetServer)

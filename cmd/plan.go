@@ -28,15 +28,15 @@ func PlanCmd(local string, remote string) *lib.DatabaseAlterations {
 	dbUrl := ParseDatabaseUrl(remote)
 
 	bPrint("Connecting to database... ")
-	db := ConnectToDb(dbUrl)
+	Db = ConnectToDb(dbUrl)
+	defer Db.Close()
 	bPrintln("done.")
-	defer db.Close()
 
 	bPrint("Fetching remote server global config... ")
-	config := FetchGlobalConfig(db)
+	config := FetchGlobalConfig()
 	bPrintln("done.")
 
-	alt := GetAlterations(local, db, dbUrl, config)
+	alt := GetAlterations(local, dbUrl, config)
 
 	// Show diff
 	ePrintln(strings.Repeat("―", width))

@@ -36,15 +36,15 @@ func ApplyCmd(local string, remote string, params ApplyParams) *lib.DatabaseAlte
 	dbUrl := ParseDatabaseUrl(remote)
 
 	bPrint("Connecting to database... ")
-	db := ConnectToDb(dbUrl)
+	Db = ConnectToDb(dbUrl)
 	bPrintln("done.")
-	defer db.Close()
+	defer Db.Close()
 
 	bPrint("Fetching remote server global config... ")
-	config := FetchGlobalConfig(db)
+	config := FetchGlobalConfig()
 	bPrintln("done.")
 
-	alt := GetAlterations(local, db, dbUrl, config)
+	alt := GetAlterations(local, dbUrl, config)
 
 	// Show statements to execute
 	ePrintln(strings.Repeat("―", width))
@@ -70,7 +70,7 @@ func ApplyCmd(local string, remote string, params ApplyParams) *lib.DatabaseAlte
 
 	for _, s := range alt.Statements() {
 		ePrintf("Executing: %s\n", s)
-		_, err := db.Exec(s)
+		_, err := Db.Exec(s)
 		cobra.CheckErr(err)
 	}
 	bPrintln("\nFinished!")

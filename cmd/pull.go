@@ -31,12 +31,12 @@ func init() {
 func pullCmd(url string) {
 	dbUrl := ParseDatabaseUrl(url)
 	bPrintf("Connecting to database... ")
-	db := ConnectToDb(dbUrl)
+	Db = ConnectToDb(dbUrl)
+	defer Db.Close()
 	bPrintf("done.")
-	defer db.Close()
 	bPrintf("Fetching remote server global config... ")
-	config := FetchGlobalConfig(db)
-	schemas := FetchSchemas(db, dbUrl, config)
+	config := FetchGlobalConfig()
+	schemas := FetchSchemas(dbUrl, config)
 
 	// Show remote database schemas
 	ePrintf(strings.Repeat("―", width))
