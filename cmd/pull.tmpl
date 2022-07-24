@@ -1,15 +1,26 @@
+Description:
+  Show the current remote database schemas.
+
 Usage:
   alternator pull <database-url> [flags]
 
 Arguments:
   database-url   URL for connecting to a database. The URL format is like following:
 
-                 (dialect)://(username)[:(password)]@(hostname)[:(port)][/(database)]
+                   {dialect}://{username}[:{password}]@{hostname}[:{port}]/{database}
+
+                 Parameters:
+                   - dialect (required): SQL dialect name. Currently, only "mysql" is supported.
+                   - username (required): User name to connect as.
+                   - password (optional): Password to be used if the server demands password authentication.
+                   - hostname (optional): Host name to connect to.
+                   - port (optional, default: 3306): Port number to connect to at the server host.
+                   - database (required): Target database name.
 
                  Examples:
-                   mysql://root@localhost
-                   mysql://root@localhost:13306/db1
-                   mysql://root:mystrongpassword@mydb.dev.example.com/db1
+                   mysql://root@localhost/mydb
+                   mysql://root@localhost:13306/mydb
+                   mysql://bob:secret@dev.example.com/mydb
 
 Flags:
   -h, --help     Show this messages

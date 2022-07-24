@@ -15,7 +15,7 @@ var pullUsage string
 func init() {
 	c := &cobra.Command{
 		Use:   "pull <database-url>",
-		Short: "Show the current database schema",
+		Short: "Show the current remote database schemas.",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			PullCmd(args[0])

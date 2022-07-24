@@ -4,21 +4,22 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
 func TestFetchGlobalConfig(t *testing.T) {
-	uri := fmt.Sprintf("mysql://root@localhost:13306/?multiStatements=true")
+	uri := fmt.Sprintf("mysql://root@localhost:13306/mydb")
 	dbUri, err := NewDatabaseUri(uri)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	db, err := sql.Open(dbUri.Dialect, dbUri.Dsn())
-	assert.NoError(t, err)
+	db, err := sql.Open(dbUri.Dialect, dbUri.DsnWoDbName())
+	require.NoError(t, err)
 
 	config, err := fetchGlobalConfig(db)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.NotEmpty(t, config.CharacterSetDatabase)
 	assert.NotEmpty(t, config.CharacterSetServer)

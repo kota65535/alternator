@@ -34,8 +34,10 @@ func getAlteredDatabases(t *testing.T, q1 string, q2 string) *DatabaseAlteration
 	r2, err := p2.Parse()
 	require.NoError(t, err)
 
-	s1 := normalizeStatements(r1, TestDefaultGlobalConfig)
-	s2 := normalizeStatements(r2, TestDefaultGlobalConfig)
+	s1, err := normalizeStatements(r1, TestDefaultGlobalConfig)
+	require.NoError(t, err)
+	s2, err := normalizeStatements(r2, TestDefaultGlobalConfig)
+	require.NoError(t, err)
 
 	fmt.Println("========== Tables ==========")
 	for _, s := range s1[0].Tables {

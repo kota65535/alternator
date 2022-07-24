@@ -29,14 +29,16 @@ func Execute() {
 }
 
 var (
-	debug bool
-	width int
+	managesAllDatabases bool
+	debug               bool
+	width               int
 )
 
 const MinTermWidth = 80
 
 func init() {
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
+	rootCmd.PersistentFlags().BoolVar(&managesAllDatabases, "all", false, "manages all user defined databases")
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "debug flag")
 	rootCmd.SetUsageTemplate(rootUsage)
 

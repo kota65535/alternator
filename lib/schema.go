@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"fmt"
 	"github.com/emirpasic/gods/sets/hashset"
 	"github.com/emirpasic/gods/stacks/arraystack"
 	"github.com/kota65535/alternator/parser"
@@ -34,15 +35,18 @@ func (r Schema) String() string {
 	return strings.Join(statements, "\n")
 }
 
-func NewSchemas(str string, config *parser.GlobalConfig) []*Schema {
+func NewSchemas(str string, config *parser.GlobalConfig) ([]*Schema, error) {
 
 	p := parser.NewParser(strings.NewReader(str))
 	statements, err := p.Parse()
 	cobra.CheckErr(err)
 
-	schema := normalizeStatements(statements, config)
+	schema, err := normalizeStatements(statements, config)
+	if err != nil {
+		return nil, fmt.Errorf("schema validation failed : %w", err)
+	}
 
-	return schema
+	return schema, nil
 }
 
 func normalizeDataType(t interface{}) interface{} {
@@ -70,14 +74,18 @@ func normalizeDataType(t interface{}) interface{} {
 	return t
 }
 
-func normalizeStatements(statements []parser.Statement, config *parser.GlobalConfig) []*Schema {
-	currentDbName := ""
+func normalizeStatements(statements []parser.Statement, config *parser.GlobalConfig) ([]*Schema, error) {
+	defaultDbName := ""
 	databases := map[string]*parser.CreateDatabaseStatement{}
 	schemas := map[string]*Schema{}
 	for i, _ := range statements {
 		s := statements[i]
 		if us, ok := s.(parser.UseStatement); ok {
-			currentDbName = us.DbName
+			if _, ok := databases[us.DbName]; ok {
+				defaultDbName = us.DbName
+			} else {
+				return nil, fmt.Errorf("found USE statement with undeclared database: %s, statement: %s", us.DbName, us.String())
+			}
 		}
 		if cds, ok := s.(parser.CreateDatabaseStatement); ok {
 			schemas[cds.DbName] = &Schema{
@@ -91,11 +99,15 @@ func normalizeStatements(statements []parser.Statement, config *parser.GlobalCon
 		if cts, ok := s.(parser.CreateTableStatement); ok {
 			// Current DB name set by USE statement
 			if cts.DbName == "" {
-				cts.DbName = currentDbName
+				if defaultDbName == "" {
+					return nil, fmt.Errorf("found CREATE TABLE statement without database name. statement: %s", cts.String())
+				}
+				cts.DbName = defaultDbName
+			} else if _, ok := databases[cts.DbName]; !ok {
+				return nil, fmt.Errorf("found CREATE TABLE statement with undeclared database: %s, statement: %s", cts.DbName, cts.String())
 			}
-			currentDb := databases[currentDbName]
 
-			cts.TableOptions.DatabaseOptions = currentDb.DatabaseOptions
+			cts.TableOptions.DatabaseOptions = databases[cts.DbName].DatabaseOptions
 
 			// Unset if engine is InnoDB, which is default
 			if cts.TableOptions.Engine == "InnoDB" {
@@ -327,7 +339,7 @@ func normalizeStatements(statements []parser.Statement, config *parser.GlobalCon
 		ret = append(ret, schemas[k])
 	}
 
-	return ret
+	return ret, nil
 }
 
 func stripOutermostParentheses(str string) string {

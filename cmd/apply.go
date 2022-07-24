@@ -21,7 +21,7 @@ func init() {
 
 	c := &cobra.Command{
 		Use:   "apply <schema-file> <database-url>",
-		Short: "Update the database schema according to the schema file",
+		Short: "Update the remote database schemas according to the local schema file.",
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			ApplyCmd(args[0], args[1], params)
@@ -40,7 +40,7 @@ func ApplyCmd(path string, uri string, params ApplyParams) *lib.DatabaseAlterati
 	cobra.CheckErr(err)
 	defer alternator.Close()
 
-	alt, err := alternator.GetAlterations(path)
+	alt, err := alternator.GetAlterationsFromFile(path)
 	cobra.CheckErr(err)
 
 	// Show statements to execute

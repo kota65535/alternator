@@ -27,19 +27,11 @@ type DatabaseUri struct {
 func NewDatabaseUri(uri string) (*DatabaseUri, error) {
 	p, err := url.Parse(uri)
 	if err != nil {
-		bPrintf("Error: failed to parse URI: %s.\n", uri)
-		ePrintln("URI format: {dialect}://{username}[:{password}]@{hostname}[:{port}][/{database}]")
-		ePrintln("Examples:")
-		ePrintln("  mysql://root@localhost")
-		ePrintln("  mysql://root@localhost:13306/mydb")
-		ePrintln("  mysql://user:secret@dev.example.com/mydb")
 		return nil, fmt.Errorf("failed to parse URI: %s : %w", uri, err)
 	}
 
 	dialect := p.Scheme
 	if !SupportedDialects.Contains(dialect) {
-		bPrintf("Error: unsupported dialect: %s\n", dialect)
-		ePrintf("Current available dialects are: %v\n", SupportedDialects)
 		return nil, fmt.Errorf("unsupported dialect: %s : %w", uri, err)
 	}
 
@@ -48,6 +40,10 @@ func NewDatabaseUri(uri string) (*DatabaseUri, error) {
 	if len(p.Path) > 0 {
 		dbName = p.Path[1:]
 	}
+	if dbName == "" && !managesAllDatabases {
+		return nil, fmt.Errorf("database name is required")
+	}
+
 	user := p.User.Username()
 	password, _ := p.User.Password()
 
@@ -64,6 +60,10 @@ func (r DatabaseUri) Dsn() string {
 	return fmt.Sprintf("%s%s@(%s)/%s", r.User, optS(r.Password, ":%s"), r.Host, r.DbName)
 }
 
+func (r DatabaseUri) DsnWoDbName() string {
+	return fmt.Sprintf("%s%s@(%s)/", r.User, optS(r.Password, ":%s"), r.Host)
+}
+
 type Alternator struct {
 	DbUri        *DatabaseUri
 	Db           *sql.DB
@@ -71,9 +71,10 @@ type Alternator struct {
 }
 
 func NewAlternator(dbUri *DatabaseUri) (*Alternator, error) {
-	db, err := sql.Open(dbUri.Dialect, dbUri.Dsn())
+	// do not use database name because it may not exist in the remote server
+	db, err := sql.Open(dbUri.Dialect, dbUri.DsnWoDbName())
 	if err != nil {
-		return nil, fmt.Errorf("failed to open database connection. DSN = %s : %w", dbUri.Dsn(), err)
+		return nil, fmt.Errorf("failed to open database connection. DSN = %s : %w", dbUri.DsnWoDbName(), err)
 	}
 
 	globalConfig, err := fetchGlobalConfig(db)
@@ -88,12 +89,20 @@ func NewAlternator(dbUri *DatabaseUri) (*Alternator, error) {
 	}, nil
 }
 
-func (r *Alternator) ReadSchemas(path string) ([]*lib.Schema, error) {
+func (r *Alternator) ReadSchemas(schema string) ([]*lib.Schema, error) {
+	schemas, err := lib.NewSchemas(schema, r.GlobalConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create shema : %w", err)
+	}
+	return schemas, nil
+}
+
+func (r *Alternator) ReadSchemasFromFile(path string) ([]*lib.Schema, error) {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read shema file: %s : %w", path, err)
 	}
-	return lib.NewSchemas(string(b), r.GlobalConfig), nil
+	return r.ReadSchemas(string(b))
 }
 
 func (r *Alternator) FetchSchemas() ([]*lib.Schema, error) {
@@ -112,8 +121,21 @@ func (r *Alternator) FetchSchemas() ([]*lib.Schema, error) {
 	}
 }
 
-func (r *Alternator) GetAlterations(path string) (*lib.DatabaseAlterations, error) {
-	localSchemas, err := r.ReadSchemas(path)
+func (r *Alternator) GetAlterations(schema string) (*lib.DatabaseAlterations, error) {
+	localSchemas, err := r.ReadSchemas(schema)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read local shema file: %w", err)
+	}
+	remoteSchemas, err := r.FetchSchemas()
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch remote schema: %w", err)
+	}
+
+	return lib.NewDatabaseAlterations(remoteSchemas, localSchemas), nil
+}
+
+func (r *Alternator) GetAlterationsFromFile(path string) (*lib.DatabaseAlterations, error) {
+	localSchemas, err := r.ReadSchemasFromFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read local shema file: %w", err)
 	}
@@ -175,7 +197,12 @@ func (r *Alternator) fetchFromDatabase(dbName string) (*lib.Schema, error) {
 		strs = append(strs, tableSchema)
 	}
 
-	return lib.NewSchemas(strings.Join(strs, ";\n"), r.GlobalConfig)[0], nil
+	schemas, err := lib.NewSchemas(strings.Join(strs, ";\n"), r.GlobalConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create shema : %w", err)
+	}
+
+	return schemas[0], nil
 }
 
 func (r *Alternator) getCreateDatabase(name string) (string, error) {

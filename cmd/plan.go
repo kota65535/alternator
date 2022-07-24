@@ -14,7 +14,7 @@ var planUsage string
 func init() {
 	c := &cobra.Command{
 		Use:   "plan <schema-file> <database-url>",
-		Short: "Show database schema changes required by the schema file",
+		Short: "Show remote database schema changes required by the local schema file.",
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			PlanCmd(args[0], args[1])
@@ -32,7 +32,7 @@ func PlanCmd(path string, uri string) *lib.DatabaseAlterations {
 	cobra.CheckErr(err)
 	defer alternator.Close()
 
-	alt, err := alternator.GetAlterations(path)
+	alt, err := alternator.GetAlterationsFromFile(path)
 	cobra.CheckErr(err)
 
 	// Show diff

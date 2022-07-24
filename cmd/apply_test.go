@@ -17,6 +17,7 @@ var ApplyParam = ApplyParams{
 var ApplyTestFixtures = []Fixture{}
 
 func init() {
+	managesAllDatabases = true
 	dirs := getDirs(RootPath)
 	sort.Strings(dirs)
 	for _, dir := range dirs {
