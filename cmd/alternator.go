@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/emirpasic/gods/sets/hashset"
+	"github.com/go-sql-driver/mysql"
 	"github.com/kota65535/alternator/lib"
 	"github.com/kota65535/alternator/parser"
 	"io/ioutil"
@@ -111,6 +112,10 @@ func (r *Alternator) FetchSchemas() ([]*lib.Schema, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch remote database schema: %w", err)
 		}
+		// Schema is empty
+		if schema == nil {
+			return []*lib.Schema{}, nil
+		}
 		return []*lib.Schema{schema}, nil
 	} else {
 		schemas, err := r.fetchFromDatabases()
@@ -162,7 +167,10 @@ func (r *Alternator) fetchFromDatabases() ([]*lib.Schema, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch remote database schema : %w", err)
 		}
-		schemas = append(schemas, schema)
+		// Schema is empty
+		if schema != nil {
+			schemas = append(schemas, schema)
+		}
 	}
 
 	return schemas, nil
@@ -174,6 +182,10 @@ func (r *Alternator) fetchFromDatabase(dbName string) (*lib.Schema, error) {
 	databaseSchema, err := r.getCreateDatabase(dbName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch remote database creation statement: %w", err)
+	}
+	// Schema is empty
+	if databaseSchema == "" {
+		return nil, nil
 	}
 
 	strs = append(strs, databaseSchema)
@@ -203,7 +215,11 @@ func (r *Alternator) fetchFromDatabase(dbName string) (*lib.Schema, error) {
 func (r *Alternator) getCreateDatabase(name string) (string, error) {
 	rows, err := r.Db.Query(fmt.Sprintf("SHOW CREATE DATABASE `%s`", name))
 	if err != nil {
-		return "", fmt.Errorf("failed to query \"SHOW CREATE DATABASE\": %w", err)
+		if v, ok := err.(*mysql.MySQLError); ok && v.Number == 1049 {
+			return "", nil
+		} else {
+			return "", fmt.Errorf("failed to query \"SHOW CREATE DATABASE\": %w", err)
+		}
 	}
 	defer rows.Close()
 	var dbName string
