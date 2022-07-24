@@ -16,15 +16,15 @@ type DatabaseAlterations struct {
 	alterations []Alteration
 }
 
-func NewDatabaseAlterations(from []Schema, to []Schema) DatabaseAlterations {
+func NewDatabaseAlterations(from []*Schema, to []*Schema) *DatabaseAlterations {
 
-	fromMap := map[string]Schema{}
+	fromMap := map[string]*Schema{}
 	fromSet := linkedhashset.New()
 	for _, s := range from {
 		fromMap[s.Database.DbName] = s
 		fromSet.Add(s.Database.DbName)
 	}
-	toMap := map[string]Schema{}
+	toMap := map[string]*Schema{}
 	toSet := linkedhashset.New()
 	for _, s := range to {
 		toMap[s.Database.DbName] = s
@@ -87,7 +87,7 @@ func NewDatabaseAlterations(from []Schema, to []Schema) DatabaseAlterations {
 		}
 	}
 
-	return DatabaseAlterations{
+	return &DatabaseAlterations{
 		Added:    added,
 		Modified: modified,
 		Dropped:  dropped,
@@ -240,7 +240,7 @@ func (r RetainedDatabase) Id() string {
 	return r.This.DbName
 }
 
-func getDatabaseOrder(from []Schema, to []Schema) map[string]int {
+func getDatabaseOrder(from []*Schema, to []*Schema) map[string]int {
 	ret := map[string]int{}
 	p1 := 0
 	p2 := 0

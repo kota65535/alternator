@@ -24,19 +24,16 @@ func init() {
 	c.SetUsageTemplate(planUsage)
 }
 
-func PlanCmd(local string, remote string) *lib.DatabaseAlterations {
-	dbUrl := ParseDatabaseUrl(remote)
+func PlanCmd(path string, uri string) *lib.DatabaseAlterations {
+	dbUri, err := NewDatabaseUri(uri)
+	cobra.CheckErr(err)
 
-	bPrint("Connecting to database... ")
-	Db = ConnectToDb(dbUrl)
-	defer Db.Close()
-	bPrintln("done.")
+	alternator, err := NewAlternator(dbUri)
+	cobra.CheckErr(err)
+	defer alternator.Close()
 
-	bPrint("Fetching remote server global config... ")
-	config := FetchGlobalConfig()
-	bPrintln("done.")
-
-	alt := GetAlterations(local, dbUrl, config)
+	alt, err := alternator.GetAlterations(path)
+	cobra.CheckErr(err)
 
 	// Show diff
 	ePrintln(strings.Repeat("―", width))
@@ -58,5 +55,6 @@ func PlanCmd(local string, remote string) *lib.DatabaseAlterations {
 	for _, s := range alt.Statements() {
 		fmt.Println(s)
 	}
-	return &alt
+
+	return alt
 }

@@ -12,6 +12,7 @@ type GlobalConfig struct {
 	CharacterSetDatabase string
 	CollationServer      string
 	CharsetToCollation   map[string]string
+	Encryption           string
 }
 
 type DatabaseOptions struct {
@@ -39,6 +40,7 @@ func (r DatabaseOptions) ActualDefaultCollate() string {
 		return r.GlobalConfig.CollationServer
 	}
 }
+
 func (r DatabaseOptions) String() string {
 	return strings.Join(r.Strings(), " ")
 }

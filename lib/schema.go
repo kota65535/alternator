@@ -34,7 +34,7 @@ func (r Schema) String() string {
 	return strings.Join(statements, "\n")
 }
 
-func NewSchemas(str string, config *parser.GlobalConfig) []Schema {
+func NewSchemas(str string, config *parser.GlobalConfig) []*Schema {
 
 	p := parser.NewParser(strings.NewReader(str))
 	statements, err := p.Parse()
@@ -70,7 +70,7 @@ func normalizeDataType(t interface{}) interface{} {
 	return t
 }
 
-func normalizeStatements(statements []parser.Statement, config *parser.GlobalConfig) []Schema {
+func normalizeStatements(statements []parser.Statement, config *parser.GlobalConfig) []*Schema {
 	currentDbName := ""
 	databases := map[string]*parser.CreateDatabaseStatement{}
 	schemas := map[string]*Schema{}
@@ -322,9 +322,9 @@ func normalizeStatements(statements []parser.Statement, config *parser.GlobalCon
 	}
 	sort.Strings(dbNames)
 
-	var ret []Schema
+	var ret []*Schema
 	for _, k := range dbNames {
-		ret = append(ret, *schemas[k])
+		ret = append(ret, schemas[k])
 	}
 
 	return ret

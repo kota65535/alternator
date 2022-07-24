@@ -3,7 +3,6 @@ package cmd
 import (
 	_ "embed"
 	"fmt"
-	"github.com/emirpasic/gods/sets/hashset"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/spf13/cobra"
 	"os"
@@ -13,30 +12,29 @@ import (
 //go:embed pull.tmpl
 var pullUsage string
 
-var IgnoredDatabases = hashset.New("information_schema", "mysql", "performance_schema", "sys")
-
 func init() {
 	c := &cobra.Command{
 		Use:   "pull <database-url>",
 		Short: "Show the current database schema",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			pullCmd(args[0])
+			PullCmd(args[0])
 		},
 	}
 	rootCmd.AddCommand(c)
 	c.SetUsageTemplate(pullUsage)
 }
 
-func pullCmd(url string) {
-	dbUrl := ParseDatabaseUrl(url)
-	bPrintf("Connecting to database... ")
-	Db = ConnectToDb(dbUrl)
-	defer Db.Close()
-	bPrintf("done.")
-	bPrintf("Fetching remote server global config... ")
-	config := FetchGlobalConfig()
-	schemas := FetchSchemas(dbUrl, config)
+func PullCmd(uri string) {
+	dbUri, err := NewDatabaseUri(uri)
+	cobra.CheckErr(err)
+
+	alternator, err := NewAlternator(dbUri)
+	cobra.CheckErr(err)
+	defer alternator.Close()
+
+	schemas, err := alternator.FetchSchemas()
+	cobra.CheckErr(err)
 
 	// Show remote database schemas
 	ePrintf(strings.Repeat("―", width))

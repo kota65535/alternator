@@ -19,7 +19,7 @@ var TestDefaultGlobalConfig = &parser.GlobalConfig{
 	},
 }
 
-func getAlteredDatabases(t *testing.T, q1 string, q2 string) DatabaseAlterations {
+func getAlteredDatabases(t *testing.T, q1 string, q2 string) *DatabaseAlterations {
 	f1, err := os.Open(q1)
 	require.NoError(t, err)
 

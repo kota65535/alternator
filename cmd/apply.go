@@ -32,19 +32,16 @@ func init() {
 	c.SetUsageTemplate(applyUsage)
 }
 
-func ApplyCmd(local string, remote string, params ApplyParams) *lib.DatabaseAlterations {
-	dbUrl := ParseDatabaseUrl(remote)
+func ApplyCmd(path string, uri string, params ApplyParams) *lib.DatabaseAlterations {
+	dbUri, err := NewDatabaseUri(uri)
+	cobra.CheckErr(err)
 
-	bPrint("Connecting to database... ")
-	Db = ConnectToDb(dbUrl)
-	bPrintln("done.")
-	defer Db.Close()
+	alternator, err := NewAlternator(dbUri)
+	cobra.CheckErr(err)
+	defer alternator.Close()
 
-	bPrint("Fetching remote server global config... ")
-	config := FetchGlobalConfig()
-	bPrintln("done.")
-
-	alt := GetAlterations(local, dbUrl, config)
+	alt, err := alternator.GetAlterations(path)
+	cobra.CheckErr(err)
 
 	// Show statements to execute
 	ePrintln(strings.Repeat("―", width))
@@ -70,9 +67,10 @@ func ApplyCmd(local string, remote string, params ApplyParams) *lib.DatabaseAlte
 
 	for _, s := range alt.Statements() {
 		ePrintf("Executing: %s\n", s)
-		_, err := Db.Exec(s)
+		_, err := alternator.Db.Exec(s)
 		cobra.CheckErr(err)
 	}
 	bPrintln("\nFinished!")
-	return &alt
+
+	return alt
 }
