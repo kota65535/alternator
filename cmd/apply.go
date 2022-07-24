@@ -22,6 +22,7 @@ func init() {
 	c := &cobra.Command{
 		Use:   "apply <schema-file> <database-url>",
 		Short: "Update the remote database schemas according to the local schema file.",
+		Long:  "Update the remote database schemas according to the local schema file.",
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			ApplyCmd(args[0], args[1], params)

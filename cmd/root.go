@@ -16,7 +16,7 @@ var rootUsage string
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:  "alternator <command> [options]",
-	Long: "SQL database schema management tool.",
+	Long: "Alternator: Declarative SQL database schema management by human-friendly pure SQL",
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

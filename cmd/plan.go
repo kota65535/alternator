@@ -15,6 +15,7 @@ func init() {
 	c := &cobra.Command{
 		Use:   "plan <schema-file> <database-url>",
 		Short: "Show remote database schema changes required by the local schema file.",
+		Long:  "Show remote database schema changes required by the local schema file.",
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			PlanCmd(args[0], args[1])
