@@ -121,30 +121,25 @@ func (r *Alternator) FetchSchemas() ([]*lib.Schema, error) {
 	}
 }
 
-func (r *Alternator) GetAlterations(schema string) (*lib.DatabaseAlterations, error) {
+func (r *Alternator) GetAlterations(schema string) (*lib.DatabaseAlterations, []*lib.Schema, []*lib.Schema, error) {
 	localSchemas, err := r.ReadSchemas(schema)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read local shema file: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to read local shema file: %w", err)
 	}
 	remoteSchemas, err := r.FetchSchemas()
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch remote schema: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to fetch remote schema: %w", err)
 	}
 
-	return lib.NewDatabaseAlterations(remoteSchemas, localSchemas), nil
+	return lib.NewDatabaseAlterations(remoteSchemas, localSchemas), remoteSchemas, localSchemas, nil
 }
 
-func (r *Alternator) GetAlterationsFromFile(path string) (*lib.DatabaseAlterations, error) {
-	localSchemas, err := r.ReadSchemasFromFile(path)
+func (r *Alternator) GetAlterationsFromFile(path string) (*lib.DatabaseAlterations, []*lib.Schema, []*lib.Schema, error) {
+	b, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read local shema file: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to read shema file: %s : %w", path, err)
 	}
-	remoteSchemas, err := r.FetchSchemas()
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch remote schema: %w", err)
-	}
-
-	return lib.NewDatabaseAlterations(remoteSchemas, localSchemas), nil
+	return r.GetAlterations(string(b))
 }
 
 func (r *Alternator) Close() error {

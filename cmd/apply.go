@@ -40,7 +40,7 @@ func ApplyCmd(path string, uri string, params ApplyParams) *lib.DatabaseAlterati
 	cobra.CheckErr(err)
 	defer alternator.Close()
 
-	alt, err := alternator.GetAlterationsFromFile(path)
+	alt, _, _, err := alternator.GetAlterationsFromFile(path)
 	cobra.CheckErr(err)
 
 	// Show statements to execute
