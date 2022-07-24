@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	Version = "unset"
+	version = "unset"
 )
 
 func init() {
@@ -23,5 +23,5 @@ func init() {
 }
 
 func versionCmd() {
-	fmt.Println(Version)
+	fmt.Println(version)
 }

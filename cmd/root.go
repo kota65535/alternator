@@ -42,7 +42,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "debug flag")
 	rootCmd.SetUsageTemplate(rootUsage)
 
-	w, _, _ := term.GetSize(syscall.Stdin)
+	w, _, _ := term.GetSize(int(syscall.Stdin))
 	if w < MinTermWidth {
 		w = MinTermWidth
 	}
