@@ -20,7 +20,7 @@ brew tap kota65535/alternator
 brew install alternator
 ```
 
-### Linux
+### Linux & Windows
 
 Download the binary from [GitHub Releases](https://github.com/kota65535/alternator/releases/latest) and drop it in
 your `$PATH`.
