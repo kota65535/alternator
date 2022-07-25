@@ -1,6 +1,6 @@
 # Alternator
 
-Declarative SQL database schema management by human-friendly pure SQL
+Declarative SQL database schema management by human-friendly pure SQL.
 
 - 100% pure SQL schema file
 - Diff visualization between a schema file and actual database schemas
