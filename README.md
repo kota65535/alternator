@@ -170,7 +170,7 @@ ALTER TABLE `example`.`blog_posts` CHANGE COLUMN `body` `content` text;
 ALTER TABLE `example`.`blog_posts` DROP FOREIGN KEY `blog_posts_ibfk_1`;
 ALTER TABLE `example`.`blog_posts` DROP INDEX `author_id`;
 ALTER TABLE `example`.`users` MODIFY COLUMN `id` int NOT NULL AUTO_INCREMENT;
-ALTER TABLE `example`.`blog_posts` ADD CONSTRAINT `blog_posts_ibfk_1` FOREIGN KEY `author_id` (`author_id`) REFERENCES `users` (`id`);
+ALTER TABLE `example`.`blog_posts` ADD FOREIGN KEY (`author_id`) REFERENCES `users` (`id`);
 CREATE TABLE `example`.`categories`
 (
     `id`   int          NOT NULL,
