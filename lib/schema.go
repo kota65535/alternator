@@ -35,13 +35,13 @@ func (r Schema) String() string {
 	return strings.Join(statements, "\n")
 }
 
-func NewSchemas(str string, config *parser.GlobalConfig) ([]*Schema, error) {
+func NewSchemas(str string, config *parser.GlobalConfig, databases *hashset.Set) ([]*Schema, error) {
 
 	p := parser.NewParser(strings.NewReader(str))
 	statements, err := p.Parse()
 	cobra.CheckErr(err)
 
-	schema, err := normalizeStatements(statements, config)
+	schema, err := normalizeStatements(statements, config, databases)
 	if err != nil {
 		return nil, fmt.Errorf("schema validation failed : %w", err)
 	}
@@ -74,7 +74,7 @@ func normalizeDataType(t interface{}) interface{} {
 	return t
 }
 
-func normalizeStatements(statements []parser.Statement, config *parser.GlobalConfig) ([]*Schema, error) {
+func normalizeStatements(statements []parser.Statement, config *parser.GlobalConfig, allowedDbNames *hashset.Set) ([]*Schema, error) {
 	defaultDbName := ""
 	databases := map[string]*parser.CreateDatabaseStatement{}
 	schemas := map[string]*Schema{}
@@ -88,6 +88,9 @@ func normalizeStatements(statements []parser.Statement, config *parser.GlobalCon
 			}
 		}
 		if cds, ok := s.(parser.CreateDatabaseStatement); ok {
+			if allowedDbNames.Size() > 0 && !allowedDbNames.Contains(cds.DbName) {
+				return nil, fmt.Errorf("found CREATE DATABASE statement with unexpected name: %s, statement: %s", cds.DbName, cds.String())
+			}
 			schemas[cds.DbName] = &Schema{
 				Database: &cds,
 				Tables:   []*parser.CreateTableStatement{},

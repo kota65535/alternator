@@ -2,6 +2,7 @@ package lib
 
 import (
 	"fmt"
+	"github.com/emirpasic/gods/sets/hashset"
 	"github.com/kota65535/alternator/parser"
 	"github.com/stretchr/testify/require"
 	"os"
@@ -34,9 +35,9 @@ func getAlteredDatabases(t *testing.T, q1 string, q2 string) *DatabaseAlteration
 	r2, err := p2.Parse()
 	require.NoError(t, err)
 
-	s1, err := normalizeStatements(r1, TestDefaultGlobalConfig)
+	s1, err := normalizeStatements(r1, TestDefaultGlobalConfig, hashset.New())
 	require.NoError(t, err)
-	s2, err := normalizeStatements(r2, TestDefaultGlobalConfig)
+	s2, err := normalizeStatements(r2, TestDefaultGlobalConfig, hashset.New())
 	require.NoError(t, err)
 
 	fmt.Println("========== Tables ==========")

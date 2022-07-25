@@ -91,7 +91,13 @@ func NewAlternator(dbUri *DatabaseUri) (*Alternator, error) {
 }
 
 func (r *Alternator) ReadSchemas(schema string) ([]*lib.Schema, error) {
-	schemas, err := lib.NewSchemas(schema, r.GlobalConfig)
+	var allowedDbNames *hashset.Set
+	if r.DbUri.DbName != "" {
+		allowedDbNames = hashset.New(r.DbUri.DbName)
+	} else {
+		allowedDbNames = hashset.New()
+	}
+	schemas, err := lib.NewSchemas(schema, r.GlobalConfig, allowedDbNames)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create shema : %w", err)
 	}
@@ -204,7 +210,7 @@ func (r *Alternator) fetchFromDatabase(dbName string) (*lib.Schema, error) {
 		strs = append(strs, tableSchema)
 	}
 
-	schemas, err := lib.NewSchemas(strings.Join(strs, ";\n"), r.GlobalConfig)
+	schemas, err := lib.NewSchemas(strings.Join(strs, ";\n"), r.GlobalConfig, hashset.New(dbName))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create shema : %w", err)
 	}
