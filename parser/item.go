@@ -45,6 +45,13 @@ func (r DatabaseOptions) String() string {
 	return strings.Join(r.Strings(), " ")
 }
 
+func (r DatabaseOptions) MapWithDefault() *linkedhashmap.Map {
+	ret := r.Map()
+	ret.Put("DEFAULT CHARACTER SET", r.ActualDefaultCharset())
+	ret.Put("DEFAULT COLLATE", r.ActualDefaultCollate())
+	return ret
+}
+
 func (r DatabaseOptions) Map() *linkedhashmap.Map {
 	ret := linkedhashmap.New()
 	if r.DefaultCharset != "" && (r.GlobalConfig == nil || r.DefaultCharset != r.GlobalConfig.CharacterSetServer) {
@@ -597,6 +604,13 @@ func (r TableOptions) ActualDefaultCollate() string {
 	} else {
 		return r.DatabaseOptions.ActualDefaultCollate()
 	}
+}
+
+func (r TableOptions) MapWithDefault() *linkedhashmap.Map {
+	ret := r.Map()
+	ret.Put("DEFAULT CHARACTER SET", r.ActualDefaultCharset())
+	ret.Put("DEFAULT COLLATE", r.ActualDefaultCollate())
+	return ret
 }
 
 func (r TableOptions) Map() *linkedhashmap.Map {

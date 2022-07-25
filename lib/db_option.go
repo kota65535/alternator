@@ -18,12 +18,8 @@ func (r *DatabaseOptionAlterations) Alterations() []Alteration {
 }
 
 func (r DatabaseOptionAlterations) Statements() []string {
-	from := r.From.Map()
-	to := r.To.Map()
-	from.Put("DEFAULT CHARACTER SET", r.From.ActualDefaultCharset())
-	from.Put("DEFAULT COLLATE", r.From.ActualDefaultCollate())
-	to.Put("DEFAULT CHARACTER SET", r.To.ActualDefaultCharset())
-	to.Put("DEFAULT COLLATE", r.To.ActualDefaultCollate())
+	from := r.From.MapWithDefault()
+	to := r.To.MapWithDefault()
 
 	keys := to.Keys()
 	ret := []string{}
@@ -38,8 +34,8 @@ func (r DatabaseOptionAlterations) Statements() []string {
 }
 
 func (r DatabaseOptionAlterations) Diff() []string {
-	from := r.From.Map()
-	to := r.To.Map()
+	from := r.From.MapWithDefault()
+	to := r.To.MapWithDefault()
 
 	keys := to.Keys()
 	ret := []string{}
@@ -51,7 +47,7 @@ func (r DatabaseOptionAlterations) Diff() []string {
 				ret = append(ret, fmt.Sprintf("+ %s = %s", k, cur))
 			} else if cur != old {
 				ret = append(ret, fmt.Sprintf("~ %s = %s\t-> %s = %s", k, old, k, cur))
-			} else {
+			} else if _, ok := r.To.Map().Get(k); ok {
 				ret = append(ret, fmt.Sprintf("  %s = %s", k, cur))
 			}
 		}
