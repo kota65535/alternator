@@ -44,6 +44,14 @@ func ApplyCmd(path string, uri string, params ApplyParams) *lib.DatabaseAlterati
 	alt, _, _, err := alternator.GetAlterationsFromFile(path)
 	cobra.CheckErr(err)
 
+	// Show diff
+	ePrintln(strings.Repeat("―", width))
+	bPrintln("Schema diff:")
+	bPrintln()
+	for _, s := range alt.Diff() {
+		printlnDiff(s)
+	}
+
 	// Show statements to execute
 	ePrintln(strings.Repeat("―", width))
 	statements := alt.Statements()
