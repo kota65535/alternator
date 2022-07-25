@@ -1,15 +1,15 @@
 # Alternator
 
-SQL database schema management tool.
+Declarative SQL database schema management by human-friendly pure SQL
 
-- Schema file is a 100% pure SQL script
-- Diff visualization between a schema file and an actual database schema
+- 100% pure SQL schema file
+- Diff visualization between a schema file and actual database schemas
 - Automatic generation and execution of ALTER statements to apply the schema
+- No need to "import" redundant schemas from the database: write your own way
 
 ## Supported databases
 
 - MySQL (8.x, 5.x)
-- Partition definition is not supported now
 
 ## Install
 
@@ -151,7 +151,7 @@ Schema diff:
       `author_id` int,
       PRIMARY KEY (`id`),
 -     CONSTRAINT `blog_posts_ibfk_1` FOREIGN KEY `author_id` (`author_id`) REFERENCES `users` (`id`),
-+     CONSTRAINT `blog_posts_ibfk_1` FOREIGN KEY `author_id` (`author_id`) REFERENCES `users` (`id`)
++     FOREIGN KEY (author_id) REFERENCES users (id)
   );
 
 + CREATE TABLE `example`.`categories`
@@ -201,30 +201,30 @@ ALTER TABLE `example`.`blog_posts` CHANGE COLUMN `body` `content` text;
 ALTER TABLE `example`.`blog_posts` DROP FOREIGN KEY `blog_posts_ibfk_1`;
 ALTER TABLE `example`.`blog_posts` DROP INDEX `author_id`;
 ALTER TABLE `example`.`users` MODIFY COLUMN `id` int NOT NULL AUTO_INCREMENT;
-ALTER TABLE `example`.`blog_posts` ADD CONSTRAINT `blog_posts_ibfk_1` FOREIGN KEY `author_id` (`author_id`) REFERENCES `users` (`id`);
+ALTER TABLE `example`.`blog_posts` ADD FOREIGN KEY (`author_id`) REFERENCES `users` (`id`);
 CREATE TABLE `example`.`categories`
 (
     `id`   int          NOT NULL,
     `name` varchar(100),
     PRIMARY KEY (`id`)
 );
+
 ――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
 Do you want to apply? [y/n]: y
-
 Executing: ALTER TABLE `example`.`users` ADD INDEX (`name`);
 Executing: ALTER TABLE `example`.`blog_posts` MODIFY COLUMN `title` varchar(200);
 Executing: ALTER TABLE `example`.`blog_posts` CHANGE COLUMN `body` `content` text;
 Executing: ALTER TABLE `example`.`blog_posts` DROP FOREIGN KEY `blog_posts_ibfk_1`;
 Executing: ALTER TABLE `example`.`blog_posts` DROP INDEX `author_id`;
 Executing: ALTER TABLE `example`.`users` MODIFY COLUMN `id` int NOT NULL AUTO_INCREMENT;
-Executing: ALTER TABLE `example`.`blog_posts` ADD CONSTRAINT `blog_posts_ibfk_1` FOREIGN KEY `author_id` (`author_id`) REFERENCES `users` (`id`);
+Executing: ALTER TABLE `example`.`blog_posts` ADD FOREIGN KEY (`author_id`) REFERENCES `users` (`id`);
 Executing: CREATE TABLE `example`.`categories`
 (
     `id`   int          NOT NULL,
     `name` varchar(100),
     PRIMARY KEY (`id`)
 );
-  
+
 Finished!
 ```
 
