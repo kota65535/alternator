@@ -177,6 +177,7 @@ func NewTableAlterations(from []*parser.CreateTableStatement, to []*parser.Creat
 		}
 	}
 
+	// Handle table dependencies
 	alterations := map[string]Alteration{}
 	for _, t := range added {
 		alterations[t.Id()] = t
@@ -193,9 +194,17 @@ func NewTableAlterations(from []*parser.CreateTableStatement, to []*parser.Creat
 	for _, t := range retained {
 		alterations[t.Id()] = t
 	}
-	for n, a := range alterations {
-		for _, dep := range dependencies[n] {
-			a.AddDependsOn(alterations[dep])
+	for _, a := range alterations {
+		if _, ok := a.(*DroppedTable); ok {
+			// Depending table must be preceded on deletion
+			for _, dep := range dependencies[a.Id()] {
+				alterations[dep].AddDependsOn(a)
+			}
+		} else {
+			// Depended table must be preceded on other alterations
+			for _, dep := range dependencies[a.Id()] {
+				a.AddDependsOn(alterations[dep])
+			}
 		}
 	}
 
