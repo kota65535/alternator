@@ -56,6 +56,7 @@ func ApplyCmd(path string, uri string, params ApplyParams) *lib.DatabaseAlterati
 	for _, s := range alt.Statements() {
 		fmt.Println(s)
 	}
+	bPrintln()
 
 	// Apply
 	ePrintln(strings.Repeat("―", width))

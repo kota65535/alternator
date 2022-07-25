@@ -8,7 +8,6 @@ ALTER TABLE `db2`.`t22` DEFAULT COLLATE = utf8mb4_bin;
 ALTER TABLE `db2`.`t22` ADD COLUMN `varchar1` varchar(10) AFTER `int2`;
 ALTER TABLE `db2`.`t22` ADD FOREIGN KEY (`varchar1`) REFERENCES `t21` (`varchar1`);
 CREATE DATABASE `db3`
-    DEFAULT CHARACTER SET = utf8mb4
     DEFAULT COLLATE = utf8mb4_bin;
 CREATE TABLE `db3`.`t32`
 (
