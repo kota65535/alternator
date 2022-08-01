@@ -204,6 +204,24 @@ func (r ColumnAlterations) Diff() []string {
 	return ret
 }
 
+func (r ColumnAlterations) FromString() []string {
+	ret := []string{}
+	for _, a := range r.Alterations() {
+		ret = append(ret, a.FromString()...)
+	}
+	ret = parser.Align(ret)
+	return ret
+}
+
+func (r ColumnAlterations) ToString() []string {
+	ret := []string{}
+	for _, a := range r.Alterations() {
+		ret = append(ret, a.ToString()...)
+	}
+	ret = parser.Align(ret)
+	return ret
+}
+
 func (r *ColumnAlterations) Alterations() []Alteration {
 	if len(r.alterations) > 0 {
 		return r.alterations
@@ -255,6 +273,14 @@ func (r AddedColumn) Diff() []string {
 	return []string{fmt.Sprintf("+ %s", r.This.String())}
 }
 
+func (r AddedColumn) FromString() []string {
+	return []string{}
+}
+
+func (r AddedColumn) ToString() []string {
+	return []string{r.This.String()}
+}
+
 func (r AddedColumn) Id() string {
 	return r.This.ColumnName
 }
@@ -273,6 +299,14 @@ func (r ModifiedColumn) Statements() []string {
 
 func (r ModifiedColumn) Diff() []string {
 	return []string{fmt.Sprintf("~ %s\t-> %s", r.From.String(), r.To.String())}
+}
+
+func (r ModifiedColumn) FromString() []string {
+	return []string{r.From.String()}
+}
+
+func (r ModifiedColumn) ToString() []string {
+	return []string{r.To.String()}
 }
 
 func (r ModifiedColumn) Id() string {
@@ -300,6 +334,14 @@ func (r MovedColumn) Diff() []string {
 	return []string{fmt.Sprintf("@ %s", r.To.String())}
 }
 
+func (r MovedColumn) FromString() []string {
+	return []string{r.From.String()}
+}
+
+func (r MovedColumn) ToString() []string {
+	return []string{r.To.String()}
+}
+
 func (r MovedColumn) Id() string {
 	return r.To.ColumnName
 }
@@ -317,6 +359,14 @@ func (r DroppedColumn) Statements() []string {
 
 func (r DroppedColumn) Diff() []string {
 	return []string{fmt.Sprintf("- %s", r.This.String())}
+}
+
+func (r DroppedColumn) FromString() []string {
+	return []string{r.This.String()}
+}
+
+func (r DroppedColumn) ToString() []string {
+	return []string{}
 }
 
 func (r DroppedColumn) Id() string {
@@ -339,6 +389,14 @@ func (r RenamedColumn) Diff() []string {
 	return []string{fmt.Sprintf("~ %s\t-> %s", r.From.String(), r.To.String())}
 }
 
+func (r RenamedColumn) FromString() []string {
+	return []string{r.From.String()}
+}
+
+func (r RenamedColumn) ToString() []string {
+	return []string{r.To.String()}
+}
+
 func (r RenamedColumn) Id() string {
 	return r.To.ColumnName
 }
@@ -357,6 +415,14 @@ func (r RetainedColumn) Statements() []string {
 
 func (r RetainedColumn) Diff() []string {
 	return []string{fmt.Sprintf("  %s", r.To.String())}
+}
+
+func (r RetainedColumn) FromString() []string {
+	return []string{r.From.String()}
+}
+
+func (r RetainedColumn) ToString() []string {
+	return []string{r.To.String()}
 }
 
 func (r RetainedColumn) Id() string {

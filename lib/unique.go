@@ -119,6 +119,24 @@ func (r UniqueKeyAlterations) Diff() []string {
 	return ret
 }
 
+func (r UniqueKeyAlterations) FromString() []string {
+	ret := []string{}
+	for _, a := range r.Alterations() {
+		ret = append(ret, a.FromString()...)
+	}
+	ret = parser.Align(ret)
+	return ret
+}
+
+func (r UniqueKeyAlterations) ToString() []string {
+	ret := []string{}
+	for _, a := range r.Alterations() {
+		ret = append(ret, a.ToString()...)
+	}
+	ret = parser.Align(ret)
+	return ret
+}
+
 func (r *UniqueKeyAlterations) Alterations() []Alteration {
 	if r.alterations != nil {
 		return r.alterations
@@ -181,6 +199,14 @@ func (r AddedUniqueKey) Diff() []string {
 	return []string{fmt.Sprintf("+ %s", r.This.String())}
 }
 
+func (r AddedUniqueKey) FromString() []string {
+	return []string{}
+}
+
+func (r AddedUniqueKey) ToString() []string {
+	return []string{r.This.String()}
+}
+
 func (r AddedUniqueKey) Id() string {
 	return keyPartId(r.This.KeyPartList)
 }
@@ -206,6 +232,14 @@ func (r ModifiedUniqueKey) Diff() []string {
 	return []string{fmt.Sprintf("~ %s\t-> %s", r.From.String(), r.To.String())}
 }
 
+func (r ModifiedUniqueKey) FromString() []string {
+	return []string{r.From.String()}
+}
+
+func (r ModifiedUniqueKey) ToString() []string {
+	return []string{r.To.String()}
+}
+
 func (r ModifiedUniqueKey) Id() string {
 	return keyPartId(r.To.KeyPartList)
 }
@@ -229,6 +263,14 @@ func (r DroppedUniqueKey) Diff() []string {
 	return []string{fmt.Sprintf("- %s", r.This.String())}
 }
 
+func (r DroppedUniqueKey) FromString() []string {
+	return []string{r.This.String()}
+}
+
+func (r DroppedUniqueKey) ToString() []string {
+	return []string{}
+}
+
 func (r DroppedUniqueKey) Id() string {
 	return keyPartId(r.This.KeyPartList)
 }
@@ -249,6 +291,14 @@ func (r RenamedUniqueKey) Diff() []string {
 	return []string{fmt.Sprintf("~ %s\t-> %s", r.From.String(), r.To.String())}
 }
 
+func (r RenamedUniqueKey) FromString() []string {
+	return []string{r.From.String()}
+}
+
+func (r RenamedUniqueKey) ToString() []string {
+	return []string{r.To.String()}
+}
+
 func (r RenamedUniqueKey) Id() string {
 	return keyPartId(r.From.KeyPartList)
 }
@@ -266,6 +316,14 @@ func (r RetainedUniqueKey) Statements() []string {
 
 func (r RetainedUniqueKey) Diff() []string {
 	return []string{fmt.Sprintf("  %s", r.This.String())}
+}
+
+func (r RetainedUniqueKey) FromString() []string {
+	return []string{r.This.String()}
+}
+
+func (r RetainedUniqueKey) ToString() []string {
+	return []string{r.This.String()}
 }
 
 func (r RetainedUniqueKey) Id() string {

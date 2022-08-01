@@ -1,0 +1,31 @@
+CREATE DATABASE `db1`;
+CREATE TABLE `db1`.`t1`
+(
+    `int1` int,
+    `int2` int,
+    `int3` int,
+    `int4` int,
+    `int5` int,
+    `int6` int,
+    `int7` int,
+    UNIQUE KEY (`int1`),
+    UNIQUE KEY `idx1` (`int4`),
+    UNIQUE KEY `idx2` (`int6`),
+    UNIQUE KEY (`int8`),
+    UNIQUE KEY (`int2`, `int3`)
+);
+CREATE TABLE `db1`.`t2`
+(
+    `int1` int,
+    `int2` int,
+    `int3` int,
+    `int4` int,
+    `int5` int,
+    `int6` int,
+    `int7` int,
+    UNIQUE KEY `c1` (`int1`),
+    UNIQUE KEY `idx1` (`int4`),
+    UNIQUE KEY `idx2` (`int6`),
+    UNIQUE KEY `c5` (`int8`),
+    UNIQUE KEY `c2` (`int2`, `int3`)
+);

@@ -111,6 +111,22 @@ func (r DatabaseAlterations) Diff() []string {
 	return ret
 }
 
+func (r DatabaseAlterations) FromString() []string {
+	ret := []string{}
+	for _, a := range r.Alterations() {
+		ret = append(ret, a.FromString()...)
+	}
+	return ret
+}
+
+func (r DatabaseAlterations) ToString() []string {
+	ret := []string{}
+	for _, a := range r.Alterations() {
+		ret = append(ret, a.ToString()...)
+	}
+	return ret
+}
+
 func (r *DatabaseAlterations) Alterations() []Alteration {
 	if len(r.alterations) != 0 {
 		return r.alterations
@@ -155,6 +171,17 @@ func (r AddedDatabase) Diff() []string {
 	return ret
 }
 
+func (r AddedDatabase) FromString() []string {
+	return []string{}
+}
+
+func (r AddedDatabase) ToString() []string {
+	ret := []string{}
+	ret = append(ret, r.This.String())
+	ret = append(ret, r.Tables.ToString()...)
+	return ret
+}
+
 func (r AddedDatabase) Id() string {
 	return r.This.DbName
 }
@@ -189,6 +216,34 @@ func (r ModifiedDatabase) Diff() []string {
 	return ret
 }
 
+func (r ModifiedDatabase) FromString() []string {
+	ret := []string{}
+	options := r.DbOptions.FromString()
+	for i, s := range options {
+		options[i] = fmt.Sprintf("%s%s", strings.Repeat(" ", 4), s)
+	}
+	databaseOptions := strings.Join(options, "\n")
+	ret = append(ret, fmt.Sprintf("CREATE DATABASE `%s`%s;",
+		r.To.DbName,
+		optS(databaseOptions, "\n%s")))
+	ret = append(ret, r.Tables.FromString()...)
+	return ret
+}
+
+func (r ModifiedDatabase) ToString() []string {
+	ret := []string{}
+	options := r.DbOptions.ToString()
+	for i, s := range options {
+		options[i] = fmt.Sprintf("%s%s", strings.Repeat(" ", 4), s)
+	}
+	databaseOptions := strings.Join(options, "\n")
+	ret = append(ret, fmt.Sprintf("CREATE DATABASE `%s`%s;",
+		r.To.DbName,
+		optS(databaseOptions, "\n%s")))
+	ret = append(ret, r.Tables.ToString()...)
+	return ret
+}
+
 func (r ModifiedDatabase) Id() string {
 	return r.To.DbName
 }
@@ -213,6 +268,17 @@ func (r DroppedDatabase) Diff() []string {
 	return ret
 }
 
+func (r DroppedDatabase) FromString() []string {
+	ret := []string{}
+	ret = append(ret, r.This.String())
+	ret = append(ret, r.Tables.FromString()...)
+	return ret
+}
+
+func (r DroppedDatabase) ToString() []string {
+	return []string{}
+}
+
 func (r DroppedDatabase) Id() string {
 	return r.This.DbName
 }
@@ -233,6 +299,20 @@ func (r RetainedDatabase) Diff() []string {
 	ret := []string{}
 	ret = append(ret, prefix(r.This.String(), "  "))
 	ret = append(ret, r.Tables.Diff()...)
+	return ret
+}
+
+func (r RetainedDatabase) FromString() []string {
+	ret := []string{}
+	ret = append(ret, r.This.String())
+	ret = append(ret, r.Tables.FromString()...)
+	return ret
+}
+
+func (r RetainedDatabase) ToString() []string {
+	ret := []string{}
+	ret = append(ret, r.This.String())
+	ret = append(ret, r.Tables.ToString()...)
 	return ret
 }
 

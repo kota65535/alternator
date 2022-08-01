@@ -102,6 +102,24 @@ func (r ForeignKeyAlterations) Diff() []string {
 	return ret
 }
 
+func (r ForeignKeyAlterations) FromString() []string {
+	ret := []string{}
+	for _, a := range r.Alterations() {
+		ret = append(ret, a.FromString()...)
+	}
+	ret = parser.Align(ret)
+	return ret
+}
+
+func (r ForeignKeyAlterations) ToString() []string {
+	ret := []string{}
+	for _, a := range r.Alterations() {
+		ret = append(ret, a.ToString()...)
+	}
+	ret = parser.Align(ret)
+	return ret
+}
+
 func (r *ForeignKeyAlterations) Alterations() []Alteration {
 	if r.alterations != nil {
 		return r.alterations
@@ -286,6 +304,14 @@ func (r AddedForeignKey) Diff() []string {
 	return []string{fmt.Sprintf("+ %s", r.This.String())}
 }
 
+func (r AddedForeignKey) FromString() []string {
+	return []string{}
+}
+
+func (r AddedForeignKey) ToString() []string {
+	return []string{r.This.String()}
+}
+
 func (r AddedForeignKey) Id() string {
 	return keyPartId(r.This.KeyPartList)
 }
@@ -316,6 +342,14 @@ func (r DroppedForeignKey) Diff() []string {
 	return []string{fmt.Sprintf("- %s", r.This.String())}
 }
 
+func (r DroppedForeignKey) FromString() []string {
+	return []string{r.This.String()}
+}
+
+func (r DroppedForeignKey) ToString() []string {
+	return []string{}
+}
+
 func (r DroppedForeignKey) Id() string {
 	return keyPartId(r.This.KeyPartList)
 }
@@ -334,6 +368,14 @@ func (r RetainedForeignKey) Statements() []string {
 
 func (r RetainedForeignKey) Diff() []string {
 	return []string{fmt.Sprintf("  %s", r.To.String())}
+}
+
+func (r RetainedForeignKey) FromString() []string {
+	return []string{r.From.String()}
+}
+
+func (r RetainedForeignKey) ToString() []string {
+	return []string{r.To.String()}
 }
 
 func (r RetainedForeignKey) Id() string {

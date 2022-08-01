@@ -308,6 +308,22 @@ func (r TableAlterations) Diff() []string {
 	return ret
 }
 
+func (r TableAlterations) FromString() []string {
+	ret := []string{}
+	for _, a := range r.Alterations() {
+		ret = append(ret, a.FromString()...)
+	}
+	return ret
+}
+
+func (r TableAlterations) ToString() []string {
+	ret := []string{}
+	for _, a := range r.Alterations() {
+		ret = append(ret, a.ToString()...)
+	}
+	return ret
+}
+
 func (r *TableAlterations) TableElementAlterations() []Alteration {
 	if r.elementAlterations != nil {
 		return r.elementAlterations
@@ -392,6 +408,14 @@ func (r AddedTable) Diff() []string {
 	return []string{prefix(r.This.String(), "+ ")}
 }
 
+func (r AddedTable) FromString() []string {
+	return []string{}
+}
+
+func (r AddedTable) ToString() []string {
+	return []string{r.This.String()}
+}
+
 func (r AddedTable) Id() string {
 	return r.This.TableName
 }
@@ -454,26 +478,15 @@ func (r ModifiedTable) Statements() []string {
 
 func (r ModifiedTable) Diff() []string {
 	defStrs := []string{}
-	for _, s := range r.Columns.Diff() {
-		defStrs = append(defStrs, fmt.Sprintf("%c%s%s", s[0], strings.Repeat(" ", 4+1), s[2:]))
-	}
-	for _, s := range r.PrimaryKeys.Diff() {
-		defStrs = append(defStrs, fmt.Sprintf("%c%s%s", s[0], strings.Repeat(" ", 4+1), s[2:]))
-	}
-	for _, s := range r.UniqueKeys.Diff() {
-		defStrs = append(defStrs, fmt.Sprintf("%c%s%s", s[0], strings.Repeat(" ", 4+1), s[2:]))
-	}
-	for _, s := range r.Indexes.Diff() {
-		defStrs = append(defStrs, fmt.Sprintf("%c%s%s", s[0], strings.Repeat(" ", 4+1), s[2:]))
-	}
-	for _, s := range r.FullTextIndexes.Diff() {
-		defStrs = append(defStrs, fmt.Sprintf("%c%s%s", s[0], strings.Repeat(" ", 4+1), s[2:]))
-	}
-	for _, s := range r.ForeignKeys.Diff() {
-		defStrs = append(defStrs, fmt.Sprintf("%c%s%s", s[0], strings.Repeat(" ", 4+1), s[2:]))
-	}
-	for _, s := range r.CheckConstraints.Diff() {
-		defStrs = append(defStrs, fmt.Sprintf("%c%s%s", s[0], strings.Repeat(" ", 4+1), s[2:]))
+	defStrs = append(defStrs, r.Columns.Diff()...)
+	defStrs = append(defStrs, r.PrimaryKeys.Diff()...)
+	defStrs = append(defStrs, r.UniqueKeys.Diff()...)
+	defStrs = append(defStrs, r.Indexes.Diff()...)
+	defStrs = append(defStrs, r.FullTextIndexes.Diff()...)
+	defStrs = append(defStrs, r.ForeignKeys.Diff()...)
+	defStrs = append(defStrs, r.CheckConstraints.Diff()...)
+	for i, s := range defStrs {
+		defStrs[i] = fmt.Sprintf("%c%s%s", s[0], strings.Repeat(" ", 4+1), s[2:])
 	}
 
 	tsStrs := []string{}
@@ -485,6 +498,64 @@ func (r ModifiedTable) Diff() []string {
 
 	return []string{
 		fmt.Sprintf("  CREATE TABLE %s`%s`\n  (\n%s\n  )%s;",
+			optS(r.To.DbName, "`%s`."),
+			r.To.TableName,
+			strings.Join(defStrs, ",\n"),
+			optS(tableOptions, "\n%s")),
+	}
+}
+
+func (r ModifiedTable) FromString() []string {
+	defStrs := []string{}
+	defStrs = append(defStrs, r.Columns.FromString()...)
+	defStrs = append(defStrs, r.PrimaryKeys.FromString()...)
+	defStrs = append(defStrs, r.UniqueKeys.FromString()...)
+	defStrs = append(defStrs, r.Indexes.FromString()...)
+	defStrs = append(defStrs, r.FullTextIndexes.FromString()...)
+	defStrs = append(defStrs, r.ForeignKeys.FromString()...)
+	defStrs = append(defStrs, r.CheckConstraints.FromString()...)
+	for i, s := range defStrs {
+		defStrs[i] = fmt.Sprintf("%s%s", strings.Repeat(" ", 4), s)
+	}
+
+	tsStrs := []string{}
+	for _, s := range r.TableOptions.FromString() {
+		tsStrs = append(tsStrs, fmt.Sprintf("%s%s", strings.Repeat(" ", 4), s))
+	}
+	tsStrs = parser.Align(tsStrs)
+	tableOptions := strings.Join(tsStrs, "\n")
+
+	return []string{
+		fmt.Sprintf("CREATE TABLE %s`%s`\n(\n%s\n)%s;",
+			optS(r.From.DbName, "`%s`."),
+			r.From.TableName,
+			strings.Join(defStrs, ",\n"),
+			optS(tableOptions, "\n%s")),
+	}
+}
+
+func (r ModifiedTable) ToString() []string {
+	defStrs := []string{}
+	defStrs = append(defStrs, r.Columns.ToString()...)
+	defStrs = append(defStrs, r.PrimaryKeys.ToString()...)
+	defStrs = append(defStrs, r.UniqueKeys.ToString()...)
+	defStrs = append(defStrs, r.Indexes.ToString()...)
+	defStrs = append(defStrs, r.FullTextIndexes.ToString()...)
+	defStrs = append(defStrs, r.ForeignKeys.ToString()...)
+	defStrs = append(defStrs, r.CheckConstraints.ToString()...)
+	for i, s := range defStrs {
+		defStrs[i] = fmt.Sprintf("%s%s", strings.Repeat(" ", 4), s)
+	}
+
+	tsStrs := []string{}
+	for _, s := range r.TableOptions.ToString() {
+		tsStrs = append(tsStrs, fmt.Sprintf("%s%s", strings.Repeat(" ", 4), s))
+	}
+	tsStrs = parser.Align(tsStrs)
+	tableOptions := strings.Join(tsStrs, "\n")
+
+	return []string{
+		fmt.Sprintf("CREATE TABLE %s`%s`\n(\n%s\n)%s;",
 			optS(r.To.DbName, "`%s`."),
 			r.To.TableName,
 			strings.Join(defStrs, ",\n"),
@@ -513,6 +584,14 @@ func (r DroppedTable) Statements() []string {
 
 func (r DroppedTable) Diff() []string {
 	return []string{prefix(r.This.String(), "- ")}
+}
+
+func (r DroppedTable) FromString() []string {
+	return []string{r.This.String()}
+}
+
+func (r DroppedTable) ToString() []string {
+	return []string{}
 }
 
 func (r DroppedTable) Id() string {
@@ -555,6 +634,14 @@ func (r RenamedTable) Diff() []string {
 	return []string{ret}
 }
 
+func (r RenamedTable) FromString() []string {
+	return []string{r.From.String()}
+}
+
+func (r RenamedTable) ToString() []string {
+	return []string{r.To.String()}
+}
+
 func (r RenamedTable) Id() string {
 	return r.To.TableName
 }
@@ -580,6 +667,14 @@ func (r RetainedTable) Statements() []string {
 
 func (r RetainedTable) Diff() []string {
 	return []string{prefix(r.This.String(), "  ")}
+}
+
+func (r RetainedTable) FromString() []string {
+	return []string{r.This.String()}
+}
+
+func (r RetainedTable) ToString() []string {
+	return []string{r.This.String()}
 }
 
 func (r RetainedTable) Id() string {

@@ -106,6 +106,24 @@ func (r CheckConstraintsAlterations) Diff() []string {
 	return ret
 }
 
+func (r CheckConstraintsAlterations) FromString() []string {
+	ret := []string{}
+	for _, a := range r.Alterations() {
+		ret = append(ret, a.FromString()...)
+	}
+	ret = parser.Align(ret)
+	return ret
+}
+
+func (r CheckConstraintsAlterations) ToString() []string {
+	ret := []string{}
+	for _, a := range r.Alterations() {
+		ret = append(ret, a.ToString()...)
+	}
+	ret = parser.Align(ret)
+	return ret
+}
+
 func (r *CheckConstraintsAlterations) Alterations() []Alteration {
 	if r.alterations != nil {
 		return r.alterations
@@ -146,6 +164,14 @@ func (r AddedCheckConstraint) Diff() []string {
 	return []string{fmt.Sprintf("+ %s", r.This.String())}
 }
 
+func (r AddedCheckConstraint) FromString() []string {
+	return []string{}
+}
+
+func (r AddedCheckConstraint) ToString() []string {
+	return []string{r.This.String()}
+}
+
 func (r AddedCheckConstraint) Id() string {
 	return r.This.Check
 }
@@ -171,6 +197,14 @@ func (r ModifiedCheckConstraint) Diff() []string {
 	return []string{fmt.Sprintf("~ %s\t-> %s", r.From.String(), r.To.String())}
 }
 
+func (r ModifiedCheckConstraint) FromString() []string {
+	return []string{r.From.String()}
+}
+
+func (r ModifiedCheckConstraint) ToString() []string {
+	return []string{r.To.String()}
+}
+
 func (r ModifiedCheckConstraint) Id() string {
 	return r.To.Check
 }
@@ -194,6 +228,14 @@ func (r DroppedCheckConstraint) Diff() []string {
 	return []string{fmt.Sprintf("- %s", r.This.String())}
 }
 
+func (r DroppedCheckConstraint) FromString() []string {
+	return []string{r.This.String()}
+}
+
+func (r DroppedCheckConstraint) ToString() []string {
+	return []string{}
+}
+
 func (r DroppedCheckConstraint) Id() string {
 	return r.This.Check
 }
@@ -211,6 +253,14 @@ func (r RetainedCheckConstraint) Statements() []string {
 
 func (r RetainedCheckConstraint) Diff() []string {
 	return []string{fmt.Sprintf("  %s", r.This.String())}
+}
+
+func (r RetainedCheckConstraint) FromString() []string {
+	return []string{r.This.String()}
+}
+
+func (r RetainedCheckConstraint) ToString() []string {
+	return []string{r.This.String()}
 }
 
 func (r RetainedCheckConstraint) Id() string {

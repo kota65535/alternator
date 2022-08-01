@@ -101,6 +101,24 @@ func (r PrimaryKeyAlterations) Diff() []string {
 	return ret
 }
 
+func (r PrimaryKeyAlterations) FromString() []string {
+	ret := []string{}
+	for _, a := range r.Alterations() {
+		ret = append(ret, a.FromString()...)
+	}
+	ret = parser.Align(ret)
+	return ret
+}
+
+func (r PrimaryKeyAlterations) ToString() []string {
+	ret := []string{}
+	for _, a := range r.Alterations() {
+		ret = append(ret, a.ToString()...)
+	}
+	ret = parser.Align(ret)
+	return ret
+}
+
 func (r *PrimaryKeyAlterations) Alterations() []Alteration {
 	if r.alterations != nil {
 		return r.alterations
@@ -210,6 +228,14 @@ func (r AddedPrimaryKey) Diff() []string {
 	return []string{fmt.Sprintf("+ %s", r.This.String())}
 }
 
+func (r AddedPrimaryKey) FromString() []string {
+	return []string{}
+}
+
+func (r AddedPrimaryKey) ToString() []string {
+	return []string{r.This.String()}
+}
+
 func (r AddedPrimaryKey) Id() string {
 	return keyPartId(r.This.KeyPartList)
 }
@@ -237,6 +263,14 @@ func (r ModifiedPrimaryKey) Diff() []string {
 	return []string{fmt.Sprintf("~ %s\t-> %s", r.From.String(), r.To.String())}
 }
 
+func (r ModifiedPrimaryKey) FromString() []string {
+	return []string{r.From.String()}
+}
+
+func (r ModifiedPrimaryKey) ToString() []string {
+	return []string{r.To.String()}
+}
+
 func (r ModifiedPrimaryKey) Id() string {
 	return keyPartId(r.To.KeyPartList)
 }
@@ -254,6 +288,14 @@ func (r DroppedPrimaryKey) Statements() []string {
 
 func (r DroppedPrimaryKey) Diff() []string {
 	return []string{fmt.Sprintf("- %s", r.This.String())}
+}
+
+func (r DroppedPrimaryKey) FromString() []string {
+	return []string{r.This.String()}
+}
+
+func (r DroppedPrimaryKey) ToString() []string {
+	return []string{}
 }
 
 func (r DroppedPrimaryKey) Id() string {
@@ -276,9 +318,16 @@ func (r RetainedPrimaryKey) Diff() []string {
 	return []string{fmt.Sprintf("  %s", r.This.String())}
 }
 
+func (r RetainedPrimaryKey) FromString() []string {
+	return []string{r.This.String()}
+}
+
+func (r RetainedPrimaryKey) ToString() []string {
+	return []string{r.This.String()}
+}
+
 func (r RetainedPrimaryKey) Id() string {
 	return keyPartId(r.This.KeyPartList)
-
 }
 
 func getPrimaryKeyOrder(from []*parser.PrimaryKeyDefinition, to []*parser.PrimaryKeyDefinition, columnOrder map[string]int) map[string]int {

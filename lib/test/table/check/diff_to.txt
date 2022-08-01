@@ -1,0 +1,19 @@
+CREATE DATABASE `db1`;
+CREATE TABLE `db1`.`t1`
+(
+    `int1` int,
+    `int2` int,
+    `int3` int,
+    CHECK (`int1` > 0),
+    CHECK (`int2` > 0) NOT ENFORCED,
+    CHECK (`int3` > 2)
+);
+CREATE TABLE `db1`.`t2`
+(
+    `int1` int,
+    `int2` int,
+    `int3` int,
+    CONSTRAINT `c1` CHECK (`int1` > 0),
+    CONSTRAINT `c2` CHECK (`int2` > 0) NOT ENFORCED,
+    CONSTRAINT `c3` CHECK (`int3` > 2)
+);

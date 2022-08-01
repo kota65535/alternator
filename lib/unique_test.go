@@ -13,7 +13,17 @@ func TestUniqueKeys(t *testing.T) {
 	alt := getAlteredDatabases(t, "test/table/unique/from.sql", "test/table/unique/to.sql")
 	statements := alt.Statements()
 	diff := alt.Diff()
+	diffFrom := alt.FromString()
+	diffTo := alt.ToString()
 	for _, s := range diff {
+		fmt.Println(s)
+	}
+	fmt.Println("==========")
+	for _, s := range diffFrom {
+		fmt.Println(s)
+	}
+	fmt.Println("==========")
+	for _, s := range diffTo {
 		fmt.Println(s)
 	}
 
@@ -24,4 +34,12 @@ func TestUniqueKeys(t *testing.T) {
 	b2, err := ioutil.ReadFile("test/table/unique/diff.txt")
 	require.NoError(t, err)
 	assert.Equal(t, string(b2), strings.Join(diff, "\n"))
+
+	b3, err := ioutil.ReadFile("test/table/unique/diff_from.txt")
+	require.NoError(t, err)
+	assert.Equal(t, string(b3), strings.Join(diffFrom, "\n"))
+
+	b4, err := ioutil.ReadFile("test/table/unique/diff_to.txt")
+	require.NoError(t, err)
+	assert.Equal(t, string(b4), strings.Join(diffTo, "\n"))
 }
