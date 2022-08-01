@@ -3,6 +3,7 @@ package cmd
 import (
 	"database/sql"
 	"fmt"
+	"github.com/emirpasic/gods/maps/linkedhashmap"
 	"github.com/emirpasic/gods/sets/hashset"
 	"github.com/go-sql-driver/mysql"
 	"github.com/kota65535/alternator/lib"
@@ -141,8 +142,52 @@ func (r *Alternator) GetAlterations(schema string) (*lib.DatabaseAlterations, []
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to fetch remote schema: %w", err)
 	}
+	remoteSchemas = r.sortRemoteSchema(remoteSchemas, localSchemas)
 
 	return lib.NewDatabaseAlterations(remoteSchemas, localSchemas), remoteSchemas, localSchemas, nil
+}
+
+// sort remote schemas by order of local schemas
+func (r *Alternator) sortRemoteSchema(remoteSchema []*lib.Schema, localSchema []*lib.Schema) []*lib.Schema {
+	ret := []*lib.Schema{}
+	dbMap := linkedhashmap.New()
+	for _, s := range remoteSchema {
+		dbMap.Put(s.Database.DbName, s)
+	}
+	for _, s := range localSchema {
+		i := lib.Find(remoteSchema, func(e *lib.Schema) bool {
+			return s.Database.DbName == e.Database.DbName
+		})
+		if i >= 0 {
+			tables := []*parser.CreateTableStatement{}
+			tableMap := linkedhashmap.New()
+			for _, t := range remoteSchema[i].Tables {
+				tableMap.Put(t.TableName, t)
+			}
+			for _, t := range s.Tables {
+				j := lib.Find(remoteSchema[i].Tables, func(e *parser.CreateTableStatement) bool {
+					return t.TableName == e.TableName
+				})
+				if j >= 0 {
+					tables = append(tables, remoteSchema[i].Tables[j])
+					tableMap.Remove(t.TableName)
+				}
+			}
+			for _, k := range tableMap.Keys() {
+				if v, ok := tableMap.Get(k); ok {
+					tables = append(tables, v.(*parser.CreateTableStatement))
+				}
+			}
+			ret = append(ret, &lib.Schema{remoteSchema[i].Database, tables})
+			dbMap.Remove(remoteSchema[i].Database.DbName)
+		}
+	}
+	for _, k := range dbMap.Keys() {
+		if v, ok := dbMap.Get(k); ok {
+			ret = append(ret, v.(*lib.Schema))
+		}
+	}
+	return ret
 }
 
 func (r *Alternator) GetAlterationsFromFile(path string) (*lib.DatabaseAlterations, []*lib.Schema, []*lib.Schema, error) {
