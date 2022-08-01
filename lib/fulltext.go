@@ -112,6 +112,24 @@ func (r FullTextIndexAlterations) Diff() []string {
 	return ret
 }
 
+func (r FullTextIndexAlterations) FromString() []string {
+	ret := []string{}
+	for _, a := range r.Alterations() {
+		ret = append(ret, a.FromString()...)
+	}
+	ret = parser.Align(ret)
+	return ret
+}
+
+func (r FullTextIndexAlterations) ToString() []string {
+	ret := []string{}
+	for _, a := range r.Alterations() {
+		ret = append(ret, a.ToString()...)
+	}
+	ret = parser.Align(ret)
+	return ret
+}
+
 func (r *FullTextIndexAlterations) Alterations() []Alteration {
 	if r.alterations != nil {
 		return r.alterations
@@ -164,6 +182,14 @@ func (r AddedFullTextIndex) Diff() []string {
 	return []string{fmt.Sprintf("+ %s", r.This.String())}
 }
 
+func (r AddedFullTextIndex) FromString() []string {
+	return []string{}
+}
+
+func (r AddedFullTextIndex) ToString() []string {
+	return []string{r.This.String()}
+}
+
 func (r AddedFullTextIndex) Id() string {
 	return keyPartId(r.This.KeyPartList)
 }
@@ -189,6 +215,14 @@ func (r ModifiedFullTextIndex) Diff() []string {
 	return []string{fmt.Sprintf("~ %s\t-> %s", r.From.String(), r.To.String())}
 }
 
+func (r ModifiedFullTextIndex) FromString() []string {
+	return []string{r.From.String()}
+}
+
+func (r ModifiedFullTextIndex) ToString() []string {
+	return []string{r.To.String()}
+}
+
 func (r ModifiedFullTextIndex) Id() string {
 	return keyPartId(r.From.KeyPartList)
 }
@@ -212,6 +246,14 @@ func (r DroppedFullTextIndex) Diff() []string {
 	return []string{fmt.Sprintf("- %s", r.This.String())}
 }
 
+func (r DroppedFullTextIndex) FromString() []string {
+	return []string{r.This.String()}
+}
+
+func (r DroppedFullTextIndex) ToString() []string {
+	return []string{}
+}
+
 func (r DroppedFullTextIndex) Id() string {
 	return keyPartId(r.This.KeyPartList)
 }
@@ -232,6 +274,14 @@ func (r RenamedFullTextIndex) Diff() []string {
 	return []string{fmt.Sprintf("~ %s\t-> %s", r.From.String(), r.To.String())}
 }
 
+func (r RenamedFullTextIndex) FromString() []string {
+	return []string{r.From.String()}
+}
+
+func (r RenamedFullTextIndex) ToString() []string {
+	return []string{r.To.String()}
+}
+
 func (r RenamedFullTextIndex) Id() string {
 	return keyPartId(r.From.KeyPartList)
 }
@@ -249,6 +299,14 @@ func (r RetainedFullTextIndex) Statements() []string {
 
 func (r RetainedFullTextIndex) Diff() []string {
 	return []string{fmt.Sprintf("  %s", r.This.String())}
+}
+
+func (r RetainedFullTextIndex) FromString() []string {
+	return []string{r.This.String()}
+}
+
+func (r RetainedFullTextIndex) ToString() []string {
+	return []string{r.This.String()}
 }
 
 func (r RetainedFullTextIndex) Id() string {

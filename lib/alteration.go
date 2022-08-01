@@ -8,6 +8,12 @@ type Alteration interface {
 	// Diff returns diff strings between before and after alteration
 	Diff() []string
 
+	// FromString returns schema strings before alteration
+	FromString() []string
+
+	// ToString returns schema string after alteration
+	ToString() []string
+
 	// Id returns alteration ID.
 	// ID must be unique among the same type of alterations (for example, table name for table alterations)
 	Id() string

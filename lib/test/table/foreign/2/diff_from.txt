@@ -1,0 +1,20 @@
+CREATE DATABASE `db1`;
+CREATE TABLE `db1`.`t0`
+(
+    `int1` int NOT NULL,
+    `int2` int,
+    PRIMARY KEY (`int1`),
+    UNIQUE KEY (`int2`)
+);
+CREATE TABLE `db1`.`t1`
+(
+    `int1` int,
+    `int2` int,
+    `int3` int,
+    `int4` int,
+    `int5` int,
+    `int6` int,
+    CONSTRAINT `t1_ibfk_1` FOREIGN KEY `t1_ibfk_1` (`int1`) REFERENCES `t3` (`int1`),
+    CONSTRAINT `t1_ibfk_2` FOREIGN KEY `t1_ibfk_2` (`int2`) REFERENCES `t3` (`int1`),
+    CONSTRAINT `t1_ibfk_3` FOREIGN KEY `t1_ibfk_3` (`int3`) REFERENCES `t3` (`int1`)
+);

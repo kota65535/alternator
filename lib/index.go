@@ -112,6 +112,24 @@ func (r IndexAlterations) Diff() []string {
 	return ret
 }
 
+func (r IndexAlterations) FromString() []string {
+	ret := []string{}
+	for _, a := range r.Alterations() {
+		ret = append(ret, a.FromString()...)
+	}
+	ret = parser.Align(ret)
+	return ret
+}
+
+func (r IndexAlterations) ToString() []string {
+	ret := []string{}
+	for _, a := range r.Alterations() {
+		ret = append(ret, a.ToString()...)
+	}
+	ret = parser.Align(ret)
+	return ret
+}
+
 func (r *IndexAlterations) Alterations() []Alteration {
 	if r.alterations != nil {
 		return r.alterations
@@ -164,6 +182,14 @@ func (r AddedIndex) Diff() []string {
 	return []string{fmt.Sprintf("+ %s", r.This.String())}
 }
 
+func (r AddedIndex) FromString() []string {
+	return []string{}
+}
+
+func (r AddedIndex) ToString() []string {
+	return []string{r.This.String()}
+}
+
 func (r AddedIndex) Id() string {
 	return keyPartId(r.This.KeyPartList)
 }
@@ -189,6 +215,14 @@ func (r ModifiedIndex) Diff() []string {
 	return []string{fmt.Sprintf("~ %s\t-> %s", r.From.String(), r.To.String())}
 }
 
+func (r ModifiedIndex) FromString() []string {
+	return []string{r.From.String()}
+}
+
+func (r ModifiedIndex) ToString() []string {
+	return []string{r.To.String()}
+}
+
 func (r ModifiedIndex) Id() string {
 	return keyPartId(r.To.KeyPartList)
 }
@@ -212,6 +246,14 @@ func (r DroppedIndex) Diff() []string {
 	return []string{fmt.Sprintf("- %s", r.This.String())}
 }
 
+func (r DroppedIndex) FromString() []string {
+	return []string{r.This.String()}
+}
+
+func (r DroppedIndex) ToString() []string {
+	return []string{}
+}
+
 func (r DroppedIndex) Id() string {
 	return keyPartId(r.This.KeyPartList)
 }
@@ -232,6 +274,14 @@ func (r RenamedIndex) Diff() []string {
 	return []string{fmt.Sprintf("~ %s\t-> %s", r.From.String(), r.To.String())}
 }
 
+func (r RenamedIndex) FromString() []string {
+	return []string{r.From.String()}
+}
+
+func (r RenamedIndex) ToString() []string {
+	return []string{r.To.String()}
+}
+
 func (r RenamedIndex) Id() string {
 	return keyPartId(r.From.KeyPartList)
 }
@@ -249,6 +299,14 @@ func (r RetainedIndex) Statements() []string {
 
 func (r RetainedIndex) Diff() []string {
 	return []string{fmt.Sprintf("  %s", r.This.String())}
+}
+
+func (r RetainedIndex) FromString() []string {
+	return []string{r.This.String()}
+}
+
+func (r RetainedIndex) ToString() []string {
+	return []string{r.This.String()}
 }
 
 func (r RetainedIndex) Id() string {

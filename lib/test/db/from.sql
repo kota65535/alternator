@@ -19,7 +19,8 @@ CREATE TABLE `t12`
     PRIMARY KEY (`int1`),
     # to be retained, referencing table to rename
     FOREIGN KEY (`int2`) REFERENCES `t11` (`int1`)
-);
+)
+    AUTO_INCREMENT = 10;
 
 # to be modified
 CREATE DATABASE `db2`

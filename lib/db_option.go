@@ -56,6 +56,14 @@ func (r DatabaseOptionAlterations) Diff() []string {
 	return ret
 }
 
+func (r DatabaseOptionAlterations) FromString() []string {
+	return r.From.Strings()
+}
+
+func (r DatabaseOptionAlterations) ToString() []string {
+	return r.To.Strings()
+}
+
 func (r DatabaseOptionAlterations) Id() string {
 	return "DatabaseOptionAlterations"
 }

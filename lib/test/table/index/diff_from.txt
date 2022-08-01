@@ -1,0 +1,16 @@
+CREATE DATABASE `db1`;
+CREATE TABLE `db1`.`t1`
+(
+    `int1` int,
+    `int2` int,
+    `int3` int,
+    `int4` int,
+    `int5` int,
+    `int6` int,
+    `int7` int,
+    INDEX (`int1`),
+    INDEX `idx1` (`int4`),
+    INDEX `idx2` (`int6`),
+    INDEX (`int8`),
+    INDEX (`int2`, `int3`)
+);

@@ -1,0 +1,17 @@
+CREATE DATABASE `db1`;
+CREATE TABLE `db1`.`t1`
+(
+    `int1`     int         NOT NULL AUTO_INCREMENT,
+    `varchar1` varchar(20),
+    `varchar2` varchar(10) GENERATED ALWAYS AS (concat(`varchar1`,'foo')),
+    PRIMARY KEY (`int1`),
+    UNIQUE KEY (`varchar1`)
+);
+CREATE TABLE `db1`.`t2`
+(
+    `varchar1` varchar(20),
+    `varchar4` varchar(30),
+    `varchar2` varchar(10),
+    `int1`     int         NOT NULL,
+    PRIMARY KEY (`int1`)
+);

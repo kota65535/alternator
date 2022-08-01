@@ -14,9 +14,9 @@ type TableOptionAlterations struct {
 }
 
 func NewTableOptionAlterations(from *parser.TableOptions, to *parser.TableOptions) TableOptionAlterations {
-	// Unset AUTO_INCREMENT if it is smaller than current value
-	if to.AutoIncrement < from.AutoIncrement {
-		to.AutoIncrement = ""
+	// Do not care if 'to' schema does not mention to AUTO_INCREMENT
+	if to.AutoIncrement == "" {
+		from.AutoIncrement = ""
 	}
 	return TableOptionAlterations{
 		From: from,
@@ -65,6 +65,14 @@ func (r TableOptionAlterations) Diff() []string {
 	}
 	ret = parser.Align(ret)
 	return ret
+}
+
+func (r TableOptionAlterations) FromString() []string {
+	return r.From.Strings()
+}
+
+func (r TableOptionAlterations) ToString() []string {
+	return r.To.Strings()
 }
 
 func (r TableOptionAlterations) Equivalent() bool {

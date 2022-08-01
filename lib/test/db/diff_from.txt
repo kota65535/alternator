@@ -1,0 +1,38 @@
+CREATE DATABASE `db1`;
+CREATE TABLE `db1`.`t11`
+(
+    `int1`     int         NOT NULL,
+    `varchar1` varchar(10),
+    PRIMARY KEY (`int1`),
+    UNIQUE KEY (`varchar1`)
+);
+CREATE TABLE `db1`.`t12`
+(
+    `int1` int NOT NULL,
+    `int2` int,
+    PRIMARY KEY (`int1`),
+    FOREIGN KEY (`int2`) REFERENCES `t13` (`int1`)
+);
+CREATE DATABASE `db2`;
+CREATE TABLE `db2`.`t21`
+(
+    `int1`     int         NOT NULL,
+    `varchar1` varchar(10),
+    PRIMARY KEY (`int1`),
+    UNIQUE KEY (`varchar1`)
+);
+CREATE TABLE `db2`.`t22`
+(
+    `int1` int NOT NULL,
+    `int2` int,
+    PRIMARY KEY (`int1`),
+    FOREIGN KEY (`int2`) REFERENCES `t21` (`int1`)
+);
+CREATE DATABASE `db4`
+    DEFAULT COLLATE = utf8mb4_bin;
+CREATE TABLE `db4`.`t41`
+(
+    `int1`     int         NOT NULL,
+    `varchar1` varchar(10),
+    PRIMARY KEY (`int1`)
+);

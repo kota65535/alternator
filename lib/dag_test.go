@@ -20,6 +20,14 @@ func (r TestAlteration) Diff() []string {
 	return []string{}
 }
 
+func (r TestAlteration) FromString() []string {
+	return []string{}
+}
+
+func (r TestAlteration) ToString() []string {
+	return []string{}
+}
+
 func (r TestAlteration) Id() string {
 	return r.id
 }

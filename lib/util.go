@@ -7,20 +7,6 @@ import (
 	"strings"
 )
 
-// Alteration Types
-
-const Column = "COLUMN"
-const Foreign = "FOREIGN"
-
-// Alteration Actions
-
-const Add = "ADD"
-const Drop = "DROP"
-const Modify = "MODIFY"
-const Rename = "RENAME"
-const Retain = "RETAIN"
-const Move = "MOVE"
-
 func optS(s1 string, s2 string) string {
 	if s1 == "" {
 		return ""
