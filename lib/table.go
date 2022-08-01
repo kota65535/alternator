@@ -454,26 +454,15 @@ func (r ModifiedTable) Statements() []string {
 
 func (r ModifiedTable) Diff() []string {
 	defStrs := []string{}
-	for _, s := range r.Columns.Diff() {
-		defStrs = append(defStrs, fmt.Sprintf("%c%s%s", s[0], strings.Repeat(" ", 4+1), s[2:]))
-	}
-	for _, s := range r.PrimaryKeys.Diff() {
-		defStrs = append(defStrs, fmt.Sprintf("%c%s%s", s[0], strings.Repeat(" ", 4+1), s[2:]))
-	}
-	for _, s := range r.UniqueKeys.Diff() {
-		defStrs = append(defStrs, fmt.Sprintf("%c%s%s", s[0], strings.Repeat(" ", 4+1), s[2:]))
-	}
-	for _, s := range r.Indexes.Diff() {
-		defStrs = append(defStrs, fmt.Sprintf("%c%s%s", s[0], strings.Repeat(" ", 4+1), s[2:]))
-	}
-	for _, s := range r.FullTextIndexes.Diff() {
-		defStrs = append(defStrs, fmt.Sprintf("%c%s%s", s[0], strings.Repeat(" ", 4+1), s[2:]))
-	}
-	for _, s := range r.ForeignKeys.Diff() {
-		defStrs = append(defStrs, fmt.Sprintf("%c%s%s", s[0], strings.Repeat(" ", 4+1), s[2:]))
-	}
-	for _, s := range r.CheckConstraints.Diff() {
-		defStrs = append(defStrs, fmt.Sprintf("%c%s%s", s[0], strings.Repeat(" ", 4+1), s[2:]))
+	defStrs = append(defStrs, r.Columns.Diff()...)
+	defStrs = append(defStrs, r.PrimaryKeys.Diff()...)
+	defStrs = append(defStrs, r.UniqueKeys.Diff()...)
+	defStrs = append(defStrs, r.Indexes.Diff()...)
+	defStrs = append(defStrs, r.FullTextIndexes.Diff()...)
+	defStrs = append(defStrs, r.ForeignKeys.Diff()...)
+	defStrs = append(defStrs, r.CheckConstraints.Diff()...)
+	for i, s := range defStrs {
+		defStrs[i] = fmt.Sprintf("%c%s%s", s[0], strings.Repeat(" ", 4+1), s[2:])
 	}
 
 	tsStrs := []string{}
