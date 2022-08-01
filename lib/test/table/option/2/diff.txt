@@ -1,0 +1,8 @@
+  CREATE DATABASE `db1`;
+  CREATE TABLE `db1`.`t1`
+  (
+      `int1`     int         NOT NULL AUTO_INCREMENT,
+      `varchar1` varchar(20),
+      `varchar2` varchar(10),
+      PRIMARY KEY (`int1`)
+  );

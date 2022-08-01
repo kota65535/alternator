@@ -3,6 +3,7 @@ package lib
 import (
 	"fmt"
 	"github.com/kota65535/alternator/parser"
+	"strconv"
 )
 
 type TableOptionAlterations struct {
@@ -14,10 +15,18 @@ type TableOptionAlterations struct {
 }
 
 func NewTableOptionAlterations(from *parser.TableOptions, to *parser.TableOptions) TableOptionAlterations {
-	// Do not care if 'to' schema does not mention to AUTO_INCREMENT
+	// Do not show AUTO_INCREMENT of the remote schema if local schema does not have it
 	if to.AutoIncrement == "" {
 		from.AutoIncrement = ""
 	}
+	// Unset AUTO_INCREMENT if the local one is smaller than the remote one
+	toAi, err1 := strconv.Atoi(to.AutoIncrement)
+	fromAi, err2 := strconv.Atoi(from.AutoIncrement)
+	if err1 == nil && err2 == nil && toAi < fromAi {
+		to.AutoIncrement = ""
+		from.AutoIncrement = ""
+	}
+
 	return TableOptionAlterations{
 		From: from,
 		To:   to,
