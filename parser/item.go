@@ -57,7 +57,7 @@ func (r DatabaseOptions) Map() *linkedhashmap.Map {
 	if r.DefaultCharset != "" && (r.GlobalConfig == nil || r.DefaultCharset != r.GlobalConfig.CharacterSetServer) {
 		ret.Put("DEFAULT CHARACTER SET", r.DefaultCharset)
 	}
-	if r.DefaultCollate != "" && (r.GlobalConfig == nil || r.DefaultCollate != r.GlobalConfig.CollationServer || r.DefaultCollate != r.GlobalConfig.CharsetToCollation[r.DefaultCollate]) {
+	if r.DefaultCollate != "" && (r.GlobalConfig == nil || r.DefaultCollate != r.GlobalConfig.CollationServer && r.DefaultCollate != r.GlobalConfig.CharsetToCollation[r.DefaultCollate]) {
 		ret.Put("DEFAULT COLLATE", r.DefaultCollate)
 	}
 	if r.DefaultEncryption != "" && (r.GlobalConfig == nil || r.DefaultEncryption != r.GlobalConfig.Encryption) {
