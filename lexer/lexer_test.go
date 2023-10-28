@@ -1,8 +1,10 @@
 package lexer
 
 import (
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"os"
 	"strings"
 	"testing"
 )
@@ -13,6 +15,12 @@ var Skipped = []TokenType{
 	NewRegexpTokenType(-1, `/\*[^!].*?\*/`, 0),
 	NewRegexpTokenType(-1, `/\*!\d{5}`, 0),
 	NewRegexpTokenType(-1, `\*/`, 0),
+}
+
+func TestMain(m *testing.M) {
+	logrus.SetLevel(logrus.DebugLevel)
+	code := m.Run()
+	os.Exit(code)
 }
 
 func TestSimpleTokenType(t *testing.T) {

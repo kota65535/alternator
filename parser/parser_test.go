@@ -9,8 +9,10 @@ import (
 	"testing"
 )
 
-func init() {
+func TestMain(m *testing.M) {
 	logrus.SetLevel(logrus.DebugLevel)
+	code := m.Run()
+	os.Exit(code)
 }
 
 func TestCreateDb(t *testing.T) {
