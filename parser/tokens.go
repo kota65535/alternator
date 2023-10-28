@@ -52,10 +52,10 @@ var Literals = []lexer.TokenType{
 }
 
 var Skipped = []string{
-	`\s`,
-	`#.*\n`,
-	`--.*\n`,
-	`/\*[^!].*?\*/`,
-	`/\*!\d{5}`,
-	`\*/`,
+	`\s`,                // space
+	`#.*\n`,             // single line comment
+	`--.*\n`,            // single line comment
+	`(?s)/\*[^!].*?\*/`, // multiple line comment
+	`/\*!\d{5}`,         // begin of comment with MySQL extensions
+	`\*/`,               // end of comment with MySQL extensions
 }

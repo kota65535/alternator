@@ -80,7 +80,7 @@ func (p *Parser) Lex(lval *yySymType) int {
 
 	p.lastToken = token
 
-	logrus.Debugf("Token '%s' as %s\n", token.Literal, token.Type.GetID())
+	logrus.Debugf("token '%s' as %s\n", token.Literal, token.Type.GetID())
 
 	return int(token.Type.GetID())
 }

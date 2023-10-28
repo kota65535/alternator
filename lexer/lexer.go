@@ -92,7 +92,7 @@ func (l *Lexer) Peek() (*Token, error) {
 		}
 	}
 
-	//fmt.Fprintf(os.Stderr, "Token = %s, %d\n", found[maxIdx].Literal, found[maxIdx].Type.GetID())
+	logrus.Debugf("token: '%s', %d\n", found[maxIdx].Literal, found[maxIdx].Type.GetID())
 
 	l.prevTokens = append(l.prevTokens, found[maxIdx])
 	return found[maxIdx], nil
@@ -129,7 +129,7 @@ func (l *Lexer) skipTokens() {
 		skipped := false
 		for _, t := range l.SkippedTokenTypes {
 			if tok := t.FindToken(l.buf, l.nextPos); tok != nil {
-				logrus.Debugf("skip %s", tok.Literal)
+				logrus.Debugf("skip: '%s'", tok.Literal)
 				l.consumeBuffer(tok)
 				skipped = true
 			}
