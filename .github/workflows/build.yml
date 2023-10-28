@@ -17,7 +17,7 @@ jobs:
         uses: kota65535/github-asdf-parse-action@v1
         id: versions
       - name: Setup Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version: ${{ steps.versions.outputs.golang }}
       - name: Install goyacc
