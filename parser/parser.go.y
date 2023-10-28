@@ -3074,13 +3074,17 @@ IndexKwd:
 	{ $$ = true }
 
 FullTextIndexKwd:
-	FULLTEXT INDEX
+	FULLTEXT
 	{ $$ = true }
 | 	FULLTEXT KEY
 	{ $$ = true }
+|	FULLTEXT INDEX
+	{ $$ = true }
 
 UniqueKeyKwd:
-	UNIQUE KEY
+	UNIQUE
+	{ $$ = true }
+|	UNIQUE KEY
 	{ $$ = true }
 |	UNIQUE INDEX
 	{ $$ = true }

@@ -11,9 +11,9 @@ CREATE TABLE `t1`
     `int5` int,
     `int6` int,
     # remained
-    UNIQUE KEY (`int1`),
+    UNIQUE (`int1`),
     # modified
-    UNIQUE INDEX (`int2`, `int3`),
+    UNIQUE KEY (`int2`, `int3`),
     # removed
     UNIQUE INDEX idx1 (`int4`),
     # renamed

@@ -13,9 +13,9 @@ CREATE TABLE `t1`
     `var5` varchar(16),
     `var6` varchar(16),
     # remained
-    FULLTEXT KEY (`var1`),
+    FULLTEXT (`var1`),
     # modified
-    FULLTEXT INDEX (`var2`),
+    FULLTEXT KEY (`var2`),
     # removed
     FULLTEXT INDEX idx1 (`var4`),
     # renamed
