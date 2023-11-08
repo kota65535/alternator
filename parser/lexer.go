@@ -1,12 +1,10 @@
 package parser
 
 import (
-	"errors"
 	"fmt"
 	"github.com/kota65535/alternator/lexer"
 	"github.com/sirupsen/logrus"
 	"io"
-	"os"
 	"strings"
 )
 
@@ -14,6 +12,7 @@ type Parser struct {
 	lexer     *lexer.Lexer
 	lastToken *lexer.Token
 	result    []Statement
+	lastError error
 }
 
 func NewParser(reader io.Reader) *Parser {
@@ -57,7 +56,7 @@ func NewParser(reader io.Reader) *Parser {
 func (p *Parser) Parse() ([]Statement, error) {
 	ret := yyParse(p)
 	if ret != 0 {
-		return nil, errors.New("parse failed")
+		return nil, fmt.Errorf("parse failed: %w", p.LastError())
 	}
 	return p.result, nil
 }
@@ -65,12 +64,8 @@ func (p *Parser) Parse() ([]Statement, error) {
 func (p *Parser) Lex(lval *yySymType) int {
 	token, err := p.lexer.Scan()
 	if err != nil {
-		if e, ok := err.(lexer.UnknownTokenError); ok {
-			fmt.Fprintln(os.Stderr, e.Error()+":")
-			fmt.Fprintln(os.Stderr, p.lexer.GetLastLine())
-			fmt.Fprintln(os.Stderr, strings.Repeat(" ", e.Position.Column)+strings.Repeat("^", len(e.Literal)))
-		}
 		p.Error(err.Error())
+		return 0
 	}
 	if token == nil {
 		return 0
@@ -86,7 +81,11 @@ func (p *Parser) Lex(lval *yySymType) int {
 }
 
 func (p *Parser) Error(e string) {
-	fmt.Fprintln(os.Stderr, e+":")
-	fmt.Fprintln(os.Stderr, p.lexer.GetLastLine())
-	fmt.Fprintln(os.Stderr, strings.Repeat(" ", p.lastToken.Position.Column)+strings.Repeat("^", len(p.lastToken.Literal)))
+	line, lineNum := p.lexer.GetLastLine()
+	marks := strings.Repeat(" ", p.lastToken.Position.Column) + strings.Repeat("^", len(p.lastToken.Literal))
+	p.lastError = fmt.Errorf("%s at line %d\n\n%s\n%s", e, lineNum, line, marks)
+}
+
+func (p *Parser) LastError() error {
+	return p.lastError
 }

@@ -2,10 +2,10 @@
 
 build: build-darwin build-linux
 
-build-darwin:
+build-darwin: yacc
 	env GOOS=darwin GOARCH=amd64 go build -o alternator-darwin -ldflags '-s -w -X github.com/kota65535/alternator/cmd.Version=0.0.0' main.go
 
-build-linux:
+build-linux: yacc
 	env GOOS=linux GOARCH=amd64 go build -o alternator-linux -ldflags '-s -w -X github.com/kota65535/alternator/cmd.Version=0.0.0' main.go
 
 test: yacc compose-up
@@ -19,7 +19,7 @@ compose-up:
 	while ! (mysqladmin ping -h 127.0.0.1 -P 13307 -u root --silent); do sleep 5; done
 
 yacc: generate
-	goyacc -o parser/parser.go parser/parser.go.y
+	goyacc -l -o parser/parser.go parser/parser.go.y
 
 generate:
 	go generate ./...

@@ -12,7 +12,8 @@ const MaxInt = int(^uint(0) >> 1)
 type Lexer struct {
 	reader            io.Reader
 	buf               string
-	loadedLine        string
+	currentLine       string
+	currentLineNum    int
 	nextPos           Position
 	TokenTypes        []TokenType
 	SkippedTokenTypes []TokenType
@@ -116,9 +117,10 @@ func (l *Lexer) consumeBuffer(t *Token) {
 	l.nextPos = shiftPos(l.nextPos, t.Literal)
 
 	if idx := strings.LastIndex(t.Literal, "\n"); idx >= 0 {
-		l.loadedLine = t.Literal[idx+1:]
+		l.currentLine = t.Literal[idx+1:]
+		l.currentLineNum += 1
 	} else {
-		l.loadedLine += t.Literal
+		l.currentLine += t.Literal
 	}
 }
 
@@ -147,12 +149,12 @@ func (l *Lexer) makeError() error {
 	}
 }
 
-func (l *Lexer) GetLastLine() string {
+func (l *Lexer) GetLastLine() (string, int) {
 	l.readBufIfNeed()
 
 	if idx := strings.Index(l.buf, "\n"); idx >= 0 {
-		return l.loadedLine + l.buf[:strings.Index(l.buf, "\n")]
+		return l.currentLine + l.buf[:strings.Index(l.buf, "\n")], l.currentLineNum + 1
 	} else {
-		return l.loadedLine + l.buf
+		return l.currentLine + l.buf, l.currentLineNum + 1
 	}
 }
