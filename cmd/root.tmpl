@@ -2,9 +2,10 @@ Usage:
   alternator <command> [flags]
 
 Commands:
-  pull         Show the current database schema
-  plan         Show database schema changes required by the schema file
-  apply        Update the database schema according to the schema file
+  validate     Validate the local schema file
+  pull         Show the remote database schema
+  plan         Show the remote database schema changes required by the local schema file
+  apply        Update the remote database schema according to the local schema file
   version      Show version
 
 Global Flags:
