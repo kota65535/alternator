@@ -16,8 +16,8 @@ var validateUsage string
 func init() {
 	c := &cobra.Command{
 		Use:   "validate <schema-file>",
-		Short: "Validate local schema file.",
-		Long:  "Validate local schema file.",
+		Short: "Validate the local schema file.",
+		Long:  "Validate the local schema file.",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ValidateCmd(args[0])
