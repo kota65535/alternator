@@ -39,6 +39,9 @@ func NewSchemas(str string, config *parser.GlobalConfig, databases *hashset.Set)
 
 	p := parser.NewParser(strings.NewReader(str))
 	statements, err := p.Parse()
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse schema : %w", err)
+	}
 	cobra.CheckErr(err)
 
 	schema, err := normalizeStatements(statements, config, databases)

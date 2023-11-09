@@ -56,7 +56,7 @@ func NewParser(reader io.Reader) *Parser {
 func (p *Parser) Parse() ([]Statement, error) {
 	ret := yyParse(p)
 	if ret != 0 {
-		return nil, fmt.Errorf("parse failed: %w", p.LastError())
+		return nil, p.LastError()
 	}
 	return p.result, nil
 }
