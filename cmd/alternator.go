@@ -117,7 +117,7 @@ func (r *Alternator) FetchSchemas() ([]*lib.Schema, error) {
 	if r.DbUri.DbName != "" {
 		schema, err := r.fetchFromDatabase(r.DbUri.DbName)
 		if err != nil {
-			return nil, fmt.Errorf("failed to fetch remote database schema: %w", err)
+			return nil, fmt.Errorf("failed to fetch remote database schema : %w", err)
 		}
 		// Schema is empty
 		if schema == nil {
@@ -127,7 +127,7 @@ func (r *Alternator) FetchSchemas() ([]*lib.Schema, error) {
 	} else {
 		schemas, err := r.fetchFromDatabases()
 		if err != nil {
-			return nil, fmt.Errorf("failed to fetch remote database schemas: %w", err)
+			return nil, fmt.Errorf("failed to fetch remote database schemas : %w", err)
 		}
 		return schemas, nil
 	}
@@ -136,11 +136,11 @@ func (r *Alternator) FetchSchemas() ([]*lib.Schema, error) {
 func (r *Alternator) GetAlterations(schema string) (*lib.DatabaseAlterations, []*lib.Schema, []*lib.Schema, error) {
 	localSchemas, err := r.ReadSchemas(schema)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to read local shema file: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to read local shema file : %w", err)
 	}
 	remoteSchemas, err := r.FetchSchemas()
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to fetch remote schema: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to fetch remote schema : %w", err)
 	}
 	remoteSchemas = r.sortRemoteSchema(remoteSchemas, localSchemas)
 
@@ -201,7 +201,7 @@ func (r *Alternator) GetAlterationsFromFile(path string) (*lib.DatabaseAlteratio
 func (r *Alternator) Close() error {
 	err := r.Db.Close()
 	if err != nil {
-		return fmt.Errorf("error: failed to close DB connection")
+		return fmt.Errorf("failed to close DB connection")
 	}
 	return nil
 }
@@ -232,7 +232,7 @@ func (r *Alternator) fetchFromDatabase(dbName string) (*lib.Schema, error) {
 
 	databaseSchema, err := r.getCreateDatabase(dbName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch remote database creation statement: %w", err)
+		return nil, fmt.Errorf("failed to fetch remote database creation statement : %w", err)
 	}
 	// Schema is empty
 	if databaseSchema == "" {
@@ -244,13 +244,13 @@ func (r *Alternator) fetchFromDatabase(dbName string) (*lib.Schema, error) {
 
 	tables, err := r.listTables(dbName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch remote table names: %w", err)
+		return nil, fmt.Errorf("failed to fetch remote table names : %w", err)
 	}
 
 	for _, t := range tables {
 		tableSchema, err := r.getCreateTable(dbName, t)
 		if err != nil {
-			return nil, fmt.Errorf("failed to fetch remote table creation statement: %w", err)
+			return nil, fmt.Errorf("failed to fetch remote table creation statement : %w", err)
 		}
 		strs = append(strs, tableSchema)
 	}
@@ -312,7 +312,7 @@ func (r *Alternator) listDatabases() ([]string, error) {
 func (r *Alternator) listUserDefinedDatabases() ([]string, error) {
 	databases, err := r.listDatabases()
 	if err != nil {
-		return nil, fmt.Errorf("failed to list databases: %w", err)
+		return nil, fmt.Errorf("failed to list databases : %w", err)
 	}
 	filtered := []string{}
 	for _, d := range databases {
