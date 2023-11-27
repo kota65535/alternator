@@ -17,6 +17,8 @@ CREATE TABLE `t2`
     `varchar5` varchar(30),
     # moved
     `int1`     int,
+    # retained
+    `int2`     int DEFAULT '1',
     # added
     `varchar3` varchar(10),
     PRIMARY KEY (`int1`)

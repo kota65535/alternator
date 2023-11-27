@@ -85,6 +85,10 @@ type ColumnDefinition struct {
 }
 
 func (r ColumnDefinition) Equals(a ColumnDefinition) bool {
+	// Trim optional quotes of DEFAULT value
+	r.ColumnOptions.Default = strings.Trim(r.ColumnOptions.Default, "'")
+	a.ColumnOptions.Default = strings.Trim(a.ColumnOptions.Default, "'")
+
 	r2, ok1 := r.DataType.(StringType)
 	a2, ok2 := a.DataType.(StringType)
 	if ok1 && ok2 {

@@ -16,6 +16,8 @@ CREATE TABLE `t2`
 (
     # to be moved
     `int1`     int,
+    # to be retained
+    `int2`     int DEFAULT 1,
     # to be modified
     `varchar1` varchar(20),
     # to be renamed
