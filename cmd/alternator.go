@@ -8,8 +8,8 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/kota65535/alternator/lib"
 	"github.com/kota65535/alternator/parser"
-	"io/ioutil"
 	"net/url"
+	"os"
 	"strings"
 )
 
@@ -106,7 +106,7 @@ func (r *Alternator) ReadSchemas(schema string) ([]*lib.Schema, error) {
 }
 
 func (r *Alternator) ReadSchemasFromFile(path string) ([]*lib.Schema, error) {
-	b, err := ioutil.ReadFile(path)
+	b, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read shema file: %s : %w", path, err)
 	}
@@ -191,7 +191,7 @@ func (r *Alternator) sortRemoteSchema(remoteSchema []*lib.Schema, localSchema []
 }
 
 func (r *Alternator) GetAlterationsFromFile(path string) (*lib.DatabaseAlterations, []*lib.Schema, []*lib.Schema, error) {
-	b, err := ioutil.ReadFile(path)
+	b, err := os.ReadFile(path)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to read shema file: %s : %w", path, err)
 	}

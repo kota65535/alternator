@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 )
@@ -27,19 +27,19 @@ func TestGetAlteredColumns(t *testing.T) {
 		fmt.Println(s)
 	}
 
-	b1, err := ioutil.ReadFile("test/table/column/alter.sql")
+	b1, err := os.ReadFile("test/table/column/alter.sql")
 	require.NoError(t, err)
 	assert.Equal(t, string(b1), strings.Join(statements, "\n"))
 
-	b2, err := ioutil.ReadFile("test/table/column/diff.txt")
+	b2, err := os.ReadFile("test/table/column/diff.txt")
 	require.NoError(t, err)
 	assert.Equal(t, string(b2), strings.Join(diff, "\n"))
 
-	b3, err := ioutil.ReadFile("test/table/column/diff_from.txt")
+	b3, err := os.ReadFile("test/table/column/diff_from.txt")
 	require.NoError(t, err)
 	assert.Equal(t, string(b3), strings.Join(diffFrom, "\n"))
 
-	b4, err := ioutil.ReadFile("test/table/column/diff_to.txt")
+	b4, err := os.ReadFile("test/table/column/diff_to.txt")
 	require.NoError(t, err)
 	assert.Equal(t, string(b4), strings.Join(diffTo, "\n"))
 }

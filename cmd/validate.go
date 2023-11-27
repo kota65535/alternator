@@ -7,7 +7,7 @@ import (
 	"github.com/kota65535/alternator/lib"
 	"github.com/kota65535/alternator/parser"
 	"github.com/spf13/cobra"
-	"io/ioutil"
+	"os"
 )
 
 //go:embed validate.tmpl
@@ -28,7 +28,7 @@ func init() {
 }
 
 func ValidateCmd(path string) {
-	b, err := ioutil.ReadFile(path)
+	b, err := os.ReadFile(path)
 	if err != nil {
 		cobra.CheckErr(fmt.Errorf("failed to read shema file: %s : %w", path, err))
 	}
