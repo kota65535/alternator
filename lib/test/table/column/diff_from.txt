@@ -13,5 +13,6 @@ CREATE TABLE `db1`.`t2`
     `varchar4` varchar(30),
     `varchar2` varchar(10),
     `int1`     int         NOT NULL,
+    `int2`     int         DEFAULT 1,
     PRIMARY KEY (`int1`)
 );
