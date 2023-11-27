@@ -4,7 +4,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"io/ioutil"
 	"os"
 	"testing"
 )
@@ -49,9 +48,9 @@ func TestCreateDb(t *testing.T) {
 		},
 	}, r)
 
-	b1, err := ioutil.ReadFile("test/db/output1.sql")
-	b2, err := ioutil.ReadFile("test/db/output2.sql")
-	b3, err := ioutil.ReadFile("test/db/output3.sql")
+	b1, err := os.ReadFile("test/db/output1.sql")
+	b2, err := os.ReadFile("test/db/output2.sql")
+	b3, err := os.ReadFile("test/db/output3.sql")
 
 	assert.Equal(t, string(b1), r[0].String())
 	assert.Equal(t, string(b2), r[1].String())
@@ -75,8 +74,8 @@ func TestUseDb(t *testing.T) {
 		},
 	}, r)
 
-	b1, err := ioutil.ReadFile("test/use/output1.sql")
-	b2, err := ioutil.ReadFile("test/use/output2.sql")
+	b1, err := os.ReadFile("test/use/output1.sql")
+	b2, err := os.ReadFile("test/use/output2.sql")
 
 	assert.Equal(t, string(b1), r[0].String())
 	assert.Equal(t, string(b2), r[1].String())
@@ -135,7 +134,7 @@ func TestCreateTableWithOptions(t *testing.T) {
 		},
 	}, r)
 
-	b1, err := ioutil.ReadFile("test/table/options/output.sql")
+	b1, err := os.ReadFile("test/table/options/output.sql")
 
 	assert.Equal(t, string(b1), r[0].String())
 }
@@ -147,7 +146,7 @@ func TestCreateTableWithExpressions(t *testing.T) {
 
 	require.NoError(t, err)
 
-	b1, err := ioutil.ReadFile("test/table/expression/output.sql")
+	b1, err := os.ReadFile("test/table/expression/output.sql")
 
 	assert.Equal(t, string(b1), r[0].String())
 }
@@ -372,7 +371,7 @@ func TestCreateTableWithNumericTypes(t *testing.T) {
 		},
 		r[0])
 
-	b1, err := ioutil.ReadFile("test/table/numeric/output.sql")
+	b1, err := os.ReadFile("test/table/numeric/output.sql")
 
 	assert.Equal(t, string(b1), r[0].String())
 }
@@ -637,7 +636,7 @@ func TestCreateTableWithStringTypes(t *testing.T) {
 			}},
 		r[0])
 
-	b1, err := ioutil.ReadFile("test/table/string/output.sql")
+	b1, err := os.ReadFile("test/table/string/output.sql")
 
 	assert.Equal(t, string(b1), r[0].String())
 }
@@ -743,7 +742,7 @@ func TestCreateTableWithDateAndTimeTypes(t *testing.T) {
 		},
 		r[0])
 
-	b1, err := ioutil.ReadFile("test/table/date/output.sql")
+	b1, err := os.ReadFile("test/table/date/output.sql")
 
 	assert.Equal(t, string(b1), r[0].String())
 
@@ -846,7 +845,7 @@ func TestCreateTableWithindexes(t *testing.T) {
 		},
 		r[0])
 
-	b1, err := ioutil.ReadFile("test/table/index/output.sql")
+	b1, err := os.ReadFile("test/table/index/output.sql")
 
 	assert.Equal(t, string(b1), r[0].String())
 }
@@ -966,8 +965,8 @@ func TestCreateTableWithConstraints(t *testing.T) {
 		},
 		r[2])
 
-	b1, err := ioutil.ReadFile("test/table/constraint/output1.sql")
-	b2, err := ioutil.ReadFile("test/table/constraint/output2.sql")
+	b1, err := os.ReadFile("test/table/constraint/output1.sql")
+	b2, err := os.ReadFile("test/table/constraint/output2.sql")
 
 	assert.Equal(t, string(b1), r[1].String())
 	assert.Equal(t, string(b2), r[2].String())
@@ -1043,7 +1042,7 @@ func TestCreateTableWithOtherTypes(t *testing.T) {
 		},
 		r[0])
 
-	b1, err := ioutil.ReadFile("test/table/others/output.sql")
+	b1, err := os.ReadFile("test/table/others/output.sql")
 
 	assert.Equal(t, string(b1), r[0].String())
 }
@@ -1089,7 +1088,7 @@ func TestCreateTableWithPartitions(t *testing.T) {
 			},
 		}, r[0])
 
-	b1, err := ioutil.ReadFile("test/table/partition/output1.sql")
+	b1, err := os.ReadFile("test/table/partition/output1.sql")
 	assert.Equal(t, string(b1), r[0].String())
 
 	assert.Equal(t,
@@ -1143,7 +1142,7 @@ func TestCreateTableWithPartitions(t *testing.T) {
 			},
 		}, r[1])
 
-	b2, err := ioutil.ReadFile("test/table/partition/output2.sql")
+	b2, err := os.ReadFile("test/table/partition/output2.sql")
 	assert.Equal(t, string(b2), r[1].String())
 
 	assert.Equal(t,
@@ -1192,6 +1191,6 @@ func TestCreateTableWithPartitions(t *testing.T) {
 			},
 		}, r[2])
 
-	b3, err := ioutil.ReadFile("test/table/partition/output3.sql")
+	b3, err := os.ReadFile("test/table/partition/output3.sql")
 	assert.Equal(t, string(b3), r[2].String())
 }

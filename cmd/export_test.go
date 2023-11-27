@@ -3,7 +3,6 @@ package cmd
 import (
 	"database/sql"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -46,7 +45,7 @@ var Skipped = []string{
 }
 
 func getDirs(path string) []string {
-	files, _ := ioutil.ReadDir(path)
+	files, _ := os.ReadDir(path)
 	ret := []string{}
 	containsDir := false
 	for _, f := range files {
@@ -67,13 +66,13 @@ func getDirs(path string) []string {
 
 func getAlter(dir string, db Database) (string, error) {
 	f := testFile(dir, "alter.sql", db)
-	s, err := ioutil.ReadFile(f)
+	s, err := os.ReadFile(f)
 	return string(s), err
 }
 
 func getDiff(dir string, db Database) (string, error) {
 	f := testFile(dir, "diff.txt", db)
-	s, err := ioutil.ReadFile(f)
+	s, err := os.ReadFile(f)
 	return string(s), err
 }
 
@@ -102,7 +101,7 @@ func prepareDb(dir string, d Database) error {
 	}
 
 	f := testFile(dir, "from.sql", d)
-	b, err := ioutil.ReadFile(f)
+	b, err := os.ReadFile(f)
 	s := string(b)
 	if s == "" {
 		return nil
