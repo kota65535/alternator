@@ -136,7 +136,7 @@ func (r *Alternator) FetchSchemas() ([]*lib.Schema, error) {
 func (r *Alternator) GetAlterations(schema string) (*lib.DatabaseAlterations, []*lib.Schema, []*lib.Schema, error) {
 	localSchemas, err := r.ReadSchemas(schema)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to read local shema file : %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to read local shema : %w", err)
 	}
 	remoteSchemas, err := r.FetchSchemas()
 	if err != nil {
@@ -269,7 +269,7 @@ func (r *Alternator) getCreateDatabase(name string) (string, error) {
 		if v, ok := err.(*mysql.MySQLError); ok && v.Number == 1049 {
 			return "", nil
 		} else {
-			return "", fmt.Errorf("failed to query \"SHOW CREATE DATABASE\": %w", err)
+			return "", fmt.Errorf("failed to query \"SHOW CREATE DATABASE\" : %w", err)
 		}
 	}
 	defer rows.Close()
@@ -284,7 +284,7 @@ func (r *Alternator) getCreateDatabase(name string) (string, error) {
 func (r *Alternator) getCreateTable(dbName string, tableName string) (string, error) {
 	rows, err := r.Db.Query(fmt.Sprintf("SHOW CREATE TABLE `%s`.`%s`", dbName, tableName))
 	if err != nil {
-		return "", fmt.Errorf("failed to query \"SHOW CREATE TABLE\": %w", err)
+		return "", fmt.Errorf("failed to query \"SHOW CREATE TABLE\" : %w", err)
 	}
 	defer rows.Close()
 	var statement string
@@ -297,7 +297,7 @@ func (r *Alternator) getCreateTable(dbName string, tableName string) (string, er
 func (r *Alternator) listDatabases() ([]string, error) {
 	rows, err := r.Db.Query("SHOW DATABASES")
 	if err != nil {
-		return nil, fmt.Errorf("failed to query \"SHOW DATABASES\": %w", err)
+		return nil, fmt.Errorf("failed to query \"SHOW DATABASES\" : %w", err)
 	}
 	defer rows.Close()
 	var databases []string
@@ -326,7 +326,7 @@ func (r *Alternator) listUserDefinedDatabases() ([]string, error) {
 func (r *Alternator) listTables(dbName string) ([]string, error) {
 	rows, err := r.Db.Query(fmt.Sprintf("SHOW TABLES FROM `%s`", dbName))
 	if err != nil {
-		return nil, fmt.Errorf("failed to query \"SHOW TABLES FROM `%s`\": %w", dbName, err)
+		return nil, fmt.Errorf("failed to query \"SHOW TABLES FROM `%s`\" : %w", dbName, err)
 	}
 	defer rows.Close()
 
@@ -342,7 +342,7 @@ func (r *Alternator) listTables(dbName string) ([]string, error) {
 func fetchGlobalConfig(db *sql.DB) (*parser.GlobalConfig, error) {
 	rows1, err := db.Query("SHOW GLOBAL VARIABLES")
 	if err != nil {
-		return nil, fmt.Errorf("failed to query \"SHOW GLOBAL VARIABLES\": %w", err)
+		return nil, fmt.Errorf("failed to query \"SHOW GLOBAL VARIABLES\" : %w", err)
 	}
 	defer rows1.Close()
 	var name string
@@ -355,7 +355,7 @@ func fetchGlobalConfig(db *sql.DB) (*parser.GlobalConfig, error) {
 
 	rows2, err := db.Query("SHOW CHARACTER SET")
 	if err != nil {
-		return nil, fmt.Errorf("failed to query \"SHOW CHARACTER SET\": %w", err)
+		return nil, fmt.Errorf("failed to query \"SHOW CHARACTER SET\" : %w", err)
 	}
 	defer rows2.Close()
 	var charset string
